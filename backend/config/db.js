@@ -49,10 +49,24 @@ const createTables = async () => {
         );
     `;
 
+    const createDocumentsTable = `
+        CREATE TABLE IF NOT EXISTS documents (
+            id SERIAL PRIMARY KEY,
+            employee_id INTEGER REFERENCES employees(id) ON DELETE CASCADE,
+            document_type VARCHAR(100) NOT NULL,
+            public_id VARCHAR(255) NOT NULL,
+            encrypted_key TEXT NOT NULL,
+            file_size INTEGER,
+            verification_status VARCHAR(20) DEFAULT 'PENDING',
+            uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    `;
+
     try {
         const client = await pool.connect();
         await client.query(createEmployeesTable);
         await client.query(createEmployersTable);
+        await client.query(createDocumentsTable);
         console.log('Tables created or already exist');
         client.release();
     } catch (err) {
