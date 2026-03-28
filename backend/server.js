@@ -4,6 +4,9 @@ import dotenv from 'dotenv';
 import helmet from 'helmet';
 import authRoutes from './routes/authRoutes.js';
 import documentRoutes from './routes/documentRoutes.js';
+import jobRoutes from './routes/jobRoutes.js';
+import verificationRoutes from './routes/verificationRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 import { createTables } from './config/db.js';
 
 dotenv.config();
@@ -19,6 +22,9 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/documents', documentRoutes);
+app.use('/api/jobs', jobRoutes);
+app.use('/api/verification', verificationRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health Check
 app.get('/', (req, res) => {

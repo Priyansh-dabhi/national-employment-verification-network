@@ -31,6 +31,17 @@ const createTables = async () => {
         );
     `;
 
+    const createAdminsTable = `
+        CREATE TABLE IF NOT EXISTS admins (
+            id SERIAL PRIMARY KEY,
+            email VARCHAR(255) UNIQUE NOT NULL,
+            password VARCHAR(255) NOT NULL,
+            full_name VARCHAR(255) NOT NULL,
+            role VARCHAR(20) DEFAULT 'admin',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    `;
+
     const createEmployersTable = `
         CREATE TABLE IF NOT EXISTS employers (
             id SERIAL PRIMARY KEY,
@@ -62,11 +73,72 @@ const createTables = async () => {
         );
     `;
 
+    const createJobsTable = `
+        CREATE TABLE IF NOT EXISTS jobs (
+            id SERIAL PRIMARY KEY,
+            employer_id INTEGER REFERENCES employers(id) ON DELETE CASCADE,
+            title VARCHAR(255) NOT NULL,
+            description TEXT NOT NULL,
+            location VARCHAR(100),
+            salary_range VARCHAR(100),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    `;
+
+    const createJobApplicationsTable = `
+        CREATE TABLE IF NOT EXISTS job_applications (
+            id SERIAL PRIMARY KEY,
+            job_id INTEGER REFERENCES jobs(id) ON DELETE CASCADE,
+            employee_id INTEGER REFERENCES employees(id) ON DELETE CASCADE,
+            status VARCHAR(20) DEFAULT 'APPLIED',
+            applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(job_id, employee_id)
+        );
+    `;
+
+    const createVerifiedIDsTable = `
+        CREATE TABLE IF NOT EXISTS verified_ids (
+            id SERIAL PRIMARY KEY,
+            id_type VARCHAR(50) NOT NULL,
+            id_number VARCHAR(100) UNIQUE NOT NULL,
+            full_name VARCHAR(255) NOT NULL,
+            dob DATE,
+            status VARCHAR(20) DEFAULT 'ACTIVE'
+        );
+    `;
+
+    const createVerificationLogsTable = `
+        CREATE TABLE IF NOT EXISTS verification_logs (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER REFERENCES employees(id) ON DELETE CASCADE,
+            document_type VARCHAR(50) NOT NULL,
+            score INTEGER,
+            status VARCHAR(20),
+            details_json TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    `;
+
+    const createBlockchainRecordsTable = `
+        CREATE TABLE IF NOT EXISTS blockchain_records (
+            id SERIAL PRIMARY KEY,
+            document_hash VARCHAR(255) UNIQUE NOT NULL,
+            block_number INTEGER,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    `;
+
     try {
         const client = await pool.connect();
         await client.query(createEmployeesTable);
+        await client.query(createAdminsTable);
         await client.query(createEmployersTable);
         await client.query(createDocumentsTable);
+        await client.query(createJobsTable);
+        await client.query(createJobApplicationsTable);
+        await client.query(createVerifiedIDsTable);
+        await client.query(createVerificationLogsTable);
+        await client.query(createBlockchainRecordsTable);
         console.log('Tables created or already exist');
         client.release();
     } catch (err) {

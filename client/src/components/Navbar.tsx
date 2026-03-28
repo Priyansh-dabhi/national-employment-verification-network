@@ -36,6 +36,9 @@ export const Navbar = () => {
 
                 {!isAuthPage && (
                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                        <Link to="/admin-login" style={{ marginRight: '1rem', color: '#94a3b8', fontSize: '0.9rem', fontWeight: 500, textDecoration: 'none' }}>
+                            Admin Portal
+                        </Link>
                         <Link to="/login">
                             <Button variant="ghost">Log In</Button>
                         </Link>

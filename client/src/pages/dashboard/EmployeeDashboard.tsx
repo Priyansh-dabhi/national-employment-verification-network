@@ -9,9 +9,9 @@ import { VerificationStatusBanner } from '../../components/ui/VerificationStatus
 import { BlockchainProofModal } from '../../components/ui/BlockchainProofModal';
 import { documentService } from '../../services/documentService';
 import { authService } from '../../services/authService';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import type { Document, VerificationStatus } from '../../types';
-import { User, FileText, Plus, Shield, CheckCircle, Calendar, MapPin, Briefcase } from 'lucide-react'; // Added icons
+import { User, FileText, Shield, Calendar, MapPin, Briefcase } from 'lucide-react'; // Added icons
 import { motion } from 'framer-motion';
 
 export const EmployeeDashboard = () => {
@@ -24,6 +24,7 @@ export const EmployeeDashboard = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'profile' | 'verification' | 'documents'>('documents');
     const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>('unverified');
+    const [rejectionReason, setRejectionReason] = useState<string>('');
 
     useEffect(() => {
         const fetchProfileAndDocs = async () => {
@@ -32,13 +33,30 @@ export const EmployeeDashboard = () => {
                 setUser(profile.user);
 
                 // Set verification status based on backend account_status
-                // Mapping: UNVERIFIED -> unverified, PENDING -> pending, VERIFIED -> verified
-                if (profile.user.account_status) {
-                    setVerificationStatus(profile.user.account_status.toLowerCase() as VerificationStatus);
+                const status = profile.user.account_status ? profile.user.account_status.toLowerCase() as VerificationStatus : 'unverified';
+                setVerificationStatus(status);
+
+                if (status === 'rejected') {
+                    // Fetch real feedback
+                    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+                    const token = localStorage.getItem('nevn_token');
+                    fetch(`${API_URL}/verification/status/${profile.user.id}`, { headers: { 'Authorization': `Bearer ${token}` } })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data && data.details_json) {
+                                try {
+                                    const details = JSON.parse(data.details_json);
+                                    if (details.reason) setRejectionReason(details.reason);
+                                } catch (e) {
+                                  // ignore parse error if manual message was sent
+                                }
+                            }
+                        })
+                        .catch(err => console.error(err));
                 }
 
-                // const docs = await documentService.getDocuments(profile.user.id); 
-                // setDocuments(docs);
+                const docs = await documentService.getDocuments(profile.user.id);
+                setDocuments(docs);
             } catch (error) {
                 console.error("Failed to fetch profile", error);
                 navigate('/login');
@@ -86,13 +104,22 @@ export const EmployeeDashboard = () => {
                     <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>My Dashboard</h1>
                     <p style={{ color: 'var(--color-text-muted)' }}>Manage your verified documents and requests.</p>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'var(--glass-bg)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--glass-border)' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--color-highlight)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000' }}>
-                        <User size={20} />
-                    </div>
-                    <div>
-                        <p style={{ fontWeight: 600, lineHeight: 1.2 }}>{user.full_name}</p>
-                        <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{user.email}</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    {verificationStatus === 'verified' && (
+                        <Link to="/jobs">
+                            <Button variant="outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--glass-bg)' }}>
+                                <Briefcase size={18} /> Find Jobs
+                            </Button>
+                        </Link>
+                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'var(--glass-bg)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--glass-border)' }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--color-highlight)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000' }}>
+                            <User size={20} />
+                        </div>
+                        <div>
+                            <p style={{ fontWeight: 600, lineHeight: 1.2 }}>{user.full_name}</p>
+                            <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{user.email}</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -100,6 +127,7 @@ export const EmployeeDashboard = () => {
             <VerificationStatusBanner
                 status={verificationStatus}
                 userRole="employee"
+                feedbackReason={rejectionReason}
                 onApply={handleApplyForVerification}
             />
 
@@ -238,7 +266,9 @@ export const EmployeeDashboard = () => {
                                                                 <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
                                                                     <span>{doc.type ? doc.type.toUpperCase() : 'DOC'}</span>
                                                                     <span>•</span>
-                                                                    <span>{doc.uploadDate ? new Date(doc.uploadDate).toLocaleDateString() : 'Unknown Date'}</span>
+                                                                    <span>
+                                                                        {doc.date ? new Date(doc.date).toLocaleDateString() : 'Unknown Date'}
+                                                                    </span>
                                                                 </div>
                                                             </div>
                                                         </div>

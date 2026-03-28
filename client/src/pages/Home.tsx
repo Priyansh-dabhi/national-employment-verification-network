@@ -2,7 +2,7 @@
 import { motion } from 'framer-motion';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { ShieldCheck, Database, Lock, ArrowRight } from 'lucide-react';
+import { ShieldCheck, Database, Lock, ArrowRight, Briefcase } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const Home = () => {
@@ -88,6 +88,11 @@ export const Home = () => {
                                 Employer Login
                             </Button>
                         </Link>
+                        <Link to="/jobs">
+                            <Button variant="outline" size="lg" style={{ borderColor: 'var(--color-highlight)', color: 'var(--color-highlight)' }}>
+                                Explore Jobs
+                            </Button>
+                        </Link>
                     </motion.div>
                 </motion.div>
             </section>
@@ -120,6 +125,14 @@ export const Home = () => {
                         <h3 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '0.75rem' }}>Instant Access</h3>
                         <p style={{ color: 'var(--color-text-muted)' }}>
                             Securely share verified credentials with employers instantly, eliminating paperwork delays.
+                        </p>
+                    </Card>
+
+                    <Card hover>
+                        <Briefcase size={40} color="#a855f7" style={{ marginBottom: '1.5rem' }} />
+                        <h3 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '0.75rem' }}>Trusted Job Portal</h3>
+                        <p style={{ color: 'var(--color-text-muted)' }}>
+                            Access an exclusive marketplace of jobs matched to your verified credentials, or recruit top talent with confidence.
                         </p>
                     </Card>
                 </div>

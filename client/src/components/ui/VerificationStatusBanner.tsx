@@ -1,16 +1,16 @@
 import React from 'react';
 import { ShieldCheck, ShieldAlert, Clock, AlertTriangle } from 'lucide-react';
-import { Card } from './Card';
 import { Button } from './Button';
 import type { VerificationStatus, UserRole } from '../../types';
 
 interface VerificationStatusBannerProps {
     status: VerificationStatus;
     userRole: UserRole;
+    feedbackReason?: string;
     onApply?: () => void;
 }
 
-export const VerificationStatusBanner: React.FC<VerificationStatusBannerProps> = ({ status, userRole, onApply }) => {
+export const VerificationStatusBanner: React.FC<VerificationStatusBannerProps> = ({ status, feedbackReason, onApply }) => {
     const getContent = () => {
         switch (status) {
             case 'verified':
@@ -87,6 +87,11 @@ export const VerificationStatusBanner: React.FC<VerificationStatusBannerProps> =
                     <p style={{ color: 'var(--color-text-muted)', fontSize: '0.95rem' }}>
                         {content.message}
                     </p>
+                    {feedbackReason && status === 'rejected' && (
+                        <div className="mt-2 text-sm bg-red-100 text-red-800 p-2 rounded-md border border-red-200">
+                            <strong>Admin Feedback:</strong> {feedbackReason}
+                        </div>
+                    )}
                 </div>
             </div>
 

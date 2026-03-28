@@ -4,7 +4,7 @@ import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Building, ArrowRight, ArrowLeft, Check, X } from 'lucide-react';
+import { User, Building, ArrowRight, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authService } from '../../services/authService';
 import type { RegistrationData, UserRole, EmploymentStatus, OrganizationType } from '../../types';

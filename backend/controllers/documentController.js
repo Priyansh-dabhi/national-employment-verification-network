@@ -4,7 +4,9 @@ import {
     encryptBuffer,
     encryptKeyWithMaster,
     generateFileKey,
-    generateIV
+    generateIV,
+    decryptBuffer,
+    decryptKeyWithMaster
 } from '../utils/encryption.js';
 
 export const uploadDocument = async (req, res) => {
@@ -83,10 +85,38 @@ export const viewDocument = async (req, res) => {
 
         // If admin -> allow (assuming admin role might be added later)
 
-        // 3. Generate Signed URL
-        const signedUrl = generateSignedUrl(document.public_id);
+        // 3. Generate Signed URL and Decrypt it
+        const originalSignedUrl = generateSignedUrl(document.public_id);
+        let finalDataUrl = originalSignedUrl; // Fallback
 
-        res.status(200).json({ signedUrl });
+        try {
+            const fileResponse = await fetch(originalSignedUrl);
+            if (fileResponse.ok) {
+                const arrayBuffer = await fileResponse.arrayBuffer();
+                const encryptedBuffer = Buffer.from(arrayBuffer);
+
+                if (document.encrypted_key && document.encrypted_key.includes('|')) {
+                    const [ivHex, encryptedKeyData] = document.encrypted_key.split('|');
+                    const fileIv = Buffer.from(ivHex, 'hex');
+                    const fileKey = decryptKeyWithMaster(encryptedKeyData);
+
+                    const decryptedBuffer = decryptBuffer(encryptedBuffer, fileKey, fileIv);
+
+                    let mimeType = 'application/octet-stream';
+                    const hex = decryptedBuffer.toString('hex', 0, 4);
+                    if (hex.startsWith('89504e47')) mimeType = 'image/png';
+                    else if (hex.startsWith('ffd8ff')) mimeType = 'image/jpeg';
+                    else if (hex.startsWith('25504446')) mimeType = 'application/pdf';
+
+                    const base64Data = decryptedBuffer.toString('base64');
+                    finalDataUrl = `data:${mimeType};base64,${base64Data}`;
+                }
+            }
+        } catch (downloadErr) {
+            console.error('Failed to download/decrypt file for view:', downloadErr);
+        }
+
+        res.status(200).json({ signedUrl: finalDataUrl });
 
     } catch (error) {
         console.error('Error in viewDocument:', error);

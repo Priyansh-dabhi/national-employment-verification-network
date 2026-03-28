@@ -9,9 +9,9 @@ import { VerificationStatusBanner } from '../../components/ui/VerificationStatus
 import { BlockchainProofModal } from '../../components/ui/BlockchainProofModal';
 import { verificationService } from '../../services/verificationService';
 import { authService } from '../../services/authService';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import type { Employee, VerificationStatus } from '../../types';
-import { Search, Building, FileCheck, History, Clock, XCircle, CheckCircle, User } from 'lucide-react';
+import { Search, Building, FileCheck, History, Clock, XCircle, CheckCircle, Briefcase } from 'lucide-react';
 
 export const EmployerDashboard = () => {
     const navigate = useNavigate();
@@ -23,6 +23,7 @@ export const EmployerDashboard = () => {
     const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
     const [isProofModalOpen, setIsProofModalOpen] = useState(false);
     const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>('unverified');
+    const [rejectionReason, setRejectionReason] = useState<string>('');
 
     useEffect(() => {
         const fetchProfileAndData = async () => {
@@ -31,7 +32,23 @@ export const EmployerDashboard = () => {
                 setUser(profile.user);
 
                 if (profile.user.account_status) {
-                    setVerificationStatus(profile.user.account_status.toLowerCase() as VerificationStatus);
+                    const status = profile.user.account_status.toLowerCase();
+                    setVerificationStatus(status as VerificationStatus);
+
+                    if (status === 'rejected' || status === 'reupload_required') {
+                        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+                        const token = localStorage.getItem('nevn_token');
+                        fetch(`${API_URL}/verification/status/${profile.user.id}`, { headers: { 'Authorization': `Bearer ${token}` } })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data && data.details_json) {
+                                    try {
+                                        const details = JSON.parse(data.details_json);
+                                        if (details.reason) setRejectionReason(details.reason);
+                                    } catch (e) {}
+                                }
+                            }).catch(err => console.error(err));
+                    }
                 }
 
                 // const allEmployees = await verificationService.getAllEmployees();
@@ -79,13 +96,22 @@ export const EmployerDashboard = () => {
                     <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>Employer Portal</h1>
                     <p style={{ color: 'var(--color-text-muted)' }}>Manage employee verifications and requests.</p>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'var(--glass-bg)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--glass-border)' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000' }}>
-                        <Building size={20} />
-                    </div>
-                    <div>
-                        <p style={{ fontWeight: 600, lineHeight: 1.2 }}>{user.organization_name}</p>
-                        <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{user.org_type} | {user.industry_sector}</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    {verificationStatus === 'verified' && (
+                        <Link to="/employer/jobs">
+                            <Button variant="outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--glass-bg)' }}>
+                                <Briefcase size={18} /> Manage Jobs
+                            </Button>
+                        </Link>
+                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'var(--glass-bg)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--glass-border)' }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000' }}>
+                            <Building size={20} />
+                        </div>
+                        <div>
+                            <p style={{ fontWeight: 600, lineHeight: 1.2 }}>{user.organization_name}</p>
+                            <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{user.org_type} | {user.industry_sector}</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -93,6 +119,7 @@ export const EmployerDashboard = () => {
             <VerificationStatusBanner
                 status={verificationStatus}
                 userRole="employer"
+                feedbackReason={rejectionReason}
             />
 
             <Card style={{ marginBottom: '2rem' }}>

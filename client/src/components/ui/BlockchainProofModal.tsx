@@ -19,11 +19,6 @@ interface BlockchainProofModalProps {
 export const BlockchainProofModal: React.FC<BlockchainProofModalProps> = ({ isOpen, onClose, proof }) => {
     if (!proof) return null;
 
-    const copyToClipboard = (text: string) => {
-        navigator.clipboard.writeText(text);
-        // Toast or notification could go here
-    };
-
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Blockchain Verification Record">
             <div style={{ padding: '1rem 0' }}>
