@@ -3,12 +3,13 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
-import { authService } from '../../services/authService';
+import { employerService } from '../../services/employerService';
 import { jobService } from '../../services/jobService';
 import type { Job } from '../../services/jobService';
 import { useNavigate, Link } from 'react-router-dom';
-import { Briefcase, MapPin, IndianRupee, Users } from 'lucide-react';
+import { Briefcase, MapPin, IndianRupee, Users, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { EmployerLayout } from '../employer/EmployerLayout';
 
 export const EmployerJobs = () => {
     const navigate = useNavigate();
@@ -23,21 +24,24 @@ export const EmployerJobs = () => {
     const [salaryRange, setSalaryRange] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const [isVerified, setIsVerified] = useState(false);
+
     useEffect(() => {
         const fetchProfileAndJobs = async () => {
             try {
-                const profile = await authService.getProfile();
+                const data = await employerService.getProfile();
+                const status = data.profile?.account_status;
                 
-                if (profile.user.account_status !== 'VERIFIED') {
-                    navigate('/dashboard/employer');
-                    return;
+                if (status === 'VERIFIED') {
+                    setIsVerified(true);
+                    const fetchedJobs = await jobService.getEmployerJobs();
+                    setJobs(fetchedJobs);
+                } else {
+                    setIsVerified(false);
                 }
-
-                const fetchedJobs = await jobService.getEmployerJobs();
-                setJobs(fetchedJobs);
             } catch (error) {
                 console.error("Failed to fetch jobs or profile", error);
-                navigate('/dashboard/employer');
+                navigate('/login');
             } finally {
                 setIsLoading(false);
             }
@@ -67,18 +71,37 @@ export const EmployerJobs = () => {
     };
 
     if (isLoading) {
-        return <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '100px' }}>Loading jobs...</div>;
+        return (
+            <EmployerLayout>
+                <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '5rem', color: 'var(--color-text-muted)' }}>Loading jobs...</div>
+            </EmployerLayout>
+        );
     }
 
     return (
-        <div className="container" style={{ paddingTop: '100px', paddingBottom: '4rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <div>
-                    <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>My Posted Jobs</h1>
-                    <p style={{ color: 'var(--color-text-muted)' }}>Manage jobs and view applicants.</p>
+        <EmployerLayout>
+            <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                    <div>
+                        <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '0.25rem' }}>Job Postings</h1>
+                        <p style={{ color: 'var(--color-text-muted)' }}>Manage jobs and view applicants.</p>
+                    </div>
+                    {isVerified && <Button onClick={() => setIsPostModalOpen(true)}>Post New Job</Button>}
                 </div>
-                <Button onClick={() => setIsPostModalOpen(true)}>Post New Job</Button>
-            </div>
+
+                {!isVerified ? (
+                    <div style={{
+                        padding: '1.5rem', borderRadius: 'var(--radius-lg)', background: 'rgba(245, 158, 11, 0.1)',
+                        border: '1px solid rgba(245, 158, 11, 0.2)', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '1rem',
+                    }}>
+                        <AlertTriangle size={24} />
+                        <div>
+                            <p style={{ fontWeight: 600, fontSize: '1.05rem', marginBottom: '0.25rem' }}>Verification Required</p>
+                            <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>Your company must be VERIFIED to post jobs and recruit candidates. Please complete Company Verification first.</p>
+                        </div>
+                    </div>
+                ) : (
+                    <>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {jobs.length === 0 ? (
@@ -190,6 +213,9 @@ export const EmployerJobs = () => {
                     </div>
                 </form>
             </Modal>
-        </div>
+            </>
+            )}
+            </div>
+        </EmployerLayout>
     );
 };

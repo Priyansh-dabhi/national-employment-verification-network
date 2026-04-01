@@ -88,11 +88,6 @@ export const Home = () => {
                                 Employer Login
                             </Button>
                         </Link>
-                        <Link to="/jobs">
-                            <Button variant="outline" size="lg" style={{ borderColor: 'var(--color-highlight)', color: 'var(--color-highlight)' }}>
-                                Explore Jobs
-                            </Button>
-                        </Link>
                     </motion.div>
                 </motion.div>
             </section>

@@ -5,7 +5,7 @@ import { decryptBuffer, decryptKeyWithMaster } from '../utils/encryption.js';
 // GET /api/admin/review-documents
 export const getReviewDocuments = async (req, res) => {
     try {
-        const query = `
+        const employeeQuery = `
             SELECT 
                 d.id as "documentId",
                 d.employee_id as "userId",
@@ -14,15 +14,32 @@ export const getReviewDocuments = async (req, res) => {
                 d.uploaded_at as "uploadedAt",
                 e.full_name as "userName",
                 'EMPLOYEE' as "userRole",
-                (SELECT score FROM verification_logs vl WHERE vl.user_id = d.employee_id AND vl.document_type = d.document_type ORDER BY vl.created_at DESC LIMIT 1) as "score",
-                (SELECT details_json FROM verification_logs vl WHERE vl.user_id = d.employee_id AND vl.document_type = d.document_type ORDER BY vl.created_at DESC LIMIT 1) as "issueFlags"
+                (SELECT score FROM verification_logs vl WHERE vl.user_id = d.employee_id AND vl.document_type = d.document_type ORDER BY vl.created_at DESC LIMIT 1) as "score"
             FROM documents d
             JOIN employees e ON d.employee_id = e.id
             ORDER BY d.uploaded_at DESC;
         `;
-        const result = await pool.query(query);
+        const employeeResult = await pool.query(employeeQuery);
 
-        const allDocs = result.rows;
+        const employerQuery = `
+            SELECT 
+                ed.id as "documentId",
+                ed.employer_id as "userId",
+                ed.document_type as "documentType",
+                ed.verification_status as "status",
+                ed.uploaded_at as "uploadedAt",
+                em.organization_name as "userName",
+                'EMPLOYER' as "userRole",
+                NULL as "score"
+            FROM employer_documents ed
+            JOIN employers em ON ed.employer_id = em.id
+            ORDER BY ed.uploaded_at DESC;
+        `;
+        const employerResult = await pool.query(employerQuery);
+
+        const employeeDocuments = employeeResult.rows;
+        const employerDocuments = employerResult.rows;
+        const allDocs = [...employeeDocuments, ...employerDocuments];
         
         const summary = {
             total: allDocs.length,
@@ -31,7 +48,7 @@ export const getReviewDocuments = async (req, res) => {
             rejected: allDocs.filter(d => d.status === 'REJECTED' || d.status === 'REUPLOAD_REQUIRED').length
         };
 
-        res.status(200).json({ summary, documents: allDocs });
+        res.status(200).json({ summary, employeeDocuments, employerDocuments });
     } catch (error) {
         console.error('Error fetching review documents:', error);
         res.status(500).json({ message: 'Failed to fetch review documents' });
@@ -42,13 +59,24 @@ export const getReviewDocuments = async (req, res) => {
 export const getDocumentById = async (req, res) => {
     try {
         const { id } = req.params;
-        
-        const docQuery = await pool.query(`
-            SELECT d.*, e.full_name, e.date_of_birth, e.gender
-            FROM documents d
-            JOIN employees e ON d.employee_id = e.id
-            WHERE d.id = $1
-        `, [id]);
+        const { role } = req.query; // 'EMPLOYEE' or 'EMPLOYER'
+
+        let docQuery;
+        if (role === 'EMPLOYER') {
+            docQuery = await pool.query(`
+                SELECT ed.*, em.organization_name as full_name, em.org_type, em.industry_sector
+                FROM employer_documents ed
+                JOIN employers em ON ed.employer_id = em.id
+                WHERE ed.id = $1
+            `, [id]);
+        } else {
+            docQuery = await pool.query(`
+                SELECT d.*, e.full_name, e.date_of_birth, e.gender
+                FROM documents d
+                JOIN employees e ON d.employee_id = e.id
+                WHERE d.id = $1
+            `, [id]);
+        }
 
         if (docQuery.rows.length === 0) {
             return res.status(404).json({ message: 'Document not found' });
@@ -56,15 +84,18 @@ export const getDocumentById = async (req, res) => {
 
         const document = docQuery.rows[0];
 
-        // Fetch latest verification log for this document type + user
-        const logQuery = await pool.query(`
-            SELECT score, details_json, created_at 
-            FROM verification_logs 
-            WHERE user_id = $1 AND document_type = $2
-            ORDER BY created_at DESC LIMIT 1
-        `, [document.employee_id, document.document_type]);
+        let verificationLog = null;
+        if (role !== 'EMPLOYER') {
+            // Fetch latest verification log for this document type + user
+            const logQuery = await pool.query(`
+                SELECT score, details_json, created_at 
+                FROM verification_logs 
+                WHERE user_id = $1 AND document_type = $2
+                ORDER BY created_at DESC LIMIT 1
+            `, [document.employee_id, document.document_type]);
 
-        const verificationLog = logQuery.rows[0] || null;
+            verificationLog = logQuery.rows[0] || null;
+        }
 
         // Download and Decrypt the document so it can be previewed in the browser
         const signedUrl = generateSignedUrl(document.public_id);
@@ -113,7 +144,7 @@ export const getDocumentById = async (req, res) => {
 // POST /api/admin/action
 export const adminAction = async (req, res) => {
     try {
-        const { documentId, action, reason } = req.body;
+        const { documentId, action, reason, role } = req.body;
         const adminId = req.user.id; // from JWT payload
 
         if (!['APPROVE', 'REJECT', 'REUPLOAD'].includes(action)) {
@@ -134,30 +165,41 @@ export const adminAction = async (req, res) => {
             newAccStatus = 'REJECTED'; // Lock further actions until re-uploaded and cleared
         }
 
-        const docQuery = await pool.query('SELECT employee_id, document_type FROM documents WHERE id = $1', [documentId]);
-        if (docQuery.rows.length === 0) {
-            return res.status(404).json({ message: 'Document not found' });
+        if (role === 'EMPLOYER') {
+            const docQuery = await pool.query('SELECT employer_id, document_type FROM employer_documents WHERE id = $1', [documentId]);
+            if (docQuery.rows.length === 0) return res.status(404).json({ message: 'Document not found' });
+            
+            const employerId = docQuery.rows[0].employer_id;
+            
+            await pool.query('UPDATE employer_documents SET verification_status = $1 WHERE id = $2', [newDocStatus, documentId]);
+            await pool.query('UPDATE employers SET account_status = $1 WHERE id = $2', [newAccStatus, employerId]);
+            
+            // Also update the employer verification tracking request if it is PENDING
+            await pool.query(
+                `UPDATE employer_verification_requests 
+                 SET status = $1, reviewed_at = NOW(), remarks = $2
+                 WHERE employer_id = $3 AND status = 'PENDING'`,
+                 [newDocStatus, reason, employerId]
+            );
+        } else {
+            const docQuery = await pool.query('SELECT employee_id, document_type FROM documents WHERE id = $1', [documentId]);
+            if (docQuery.rows.length === 0) return res.status(404).json({ message: 'Document not found' });
+            
+            const employeeId = docQuery.rows[0].employee_id;
+            const docType = docQuery.rows[0].document_type;
+
+            await pool.query('UPDATE documents SET verification_status = $1 WHERE id = $2', [newDocStatus, documentId]);
+            await pool.query('UPDATE employees SET account_status = $1 WHERE id = $2', [newAccStatus, employeeId]);
+
+            const details = JSON.stringify({ reason, adminId, action });
+            await pool.query(`
+                INSERT INTO verification_logs (user_id, document_type, score, status, details_json)
+                VALUES ($1, $2, $3, $4, $5)
+            `, [employeeId, docType, 100, action, details]);
         }
 
-        const employeeId = docQuery.rows[0].employee_id;
-        const docType = docQuery.rows[0].document_type;
-
-        // Update Document status and store reason (we'll reuse verification_status or add a column/audit log)
-        // Since documents doesn't have a specific `admin_feedback` column, we insert into verification_logs
-        await pool.query('UPDATE documents SET verification_status = $1 WHERE id = $2', [newDocStatus, documentId]);
-
-        // Update User Account Status
-        await pool.query('UPDATE employees SET account_status = $1 WHERE id = $2', [newAccStatus, employeeId]);
-
-        // Add an audit log entry
-        const details = JSON.stringify({ reason, adminId, action });
-        await pool.query(`
-            INSERT INTO verification_logs (user_id, document_type, score, status, details_json)
-            VALUES ($1, $2, $3, $4, $5)
-        `, [employeeId, docType, 100, action, details]);
-
         // Add Mock Blockchain Ledger logic
-        const mockHash = `ADMIN_ACTION_${documentId}_${Date.now()}`;
+        const mockHash = `ADMIN_ACTION_${role}_${documentId}_${Date.now()}`;
         await pool.query('INSERT INTO blockchain_records (document_hash, block_number) VALUES ($1, $2)', 
             [mockHash, Math.floor(Math.random() * 1000000)]);
 

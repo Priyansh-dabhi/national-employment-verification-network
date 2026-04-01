@@ -7,6 +7,7 @@ import documentRoutes from './routes/documentRoutes.js';
 import jobRoutes from './routes/jobRoutes.js';
 import verificationRoutes from './routes/verificationRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import employerRoutes from './routes/employerRoutes.js';
 import { createTables } from './config/db.js';
 
 dotenv.config();
@@ -25,6 +26,7 @@ app.use('/api/documents', documentRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/verification', verificationRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/employer', employerRoutes);
 
 // Health Check
 app.get('/', (req, res) => {

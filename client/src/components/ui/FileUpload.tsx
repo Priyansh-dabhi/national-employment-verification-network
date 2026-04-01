@@ -1,16 +1,23 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { UploadCloud, FileText, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface FileUploadProps {
     onFileSelect?: (file: File) => void;
     label?: string;
+    resetKey?: number; // increment this from parent to force-clear the component
 }
 
-export const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, label = "Upload Document" }) => {
+export const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, label = "Upload Document", resetKey }) => {
     const [isDragOver, setIsDragOver] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+
+    // Reset whenever parent increments resetKey
+    useEffect(() => {
+        setSelectedFile(null);
+        if (inputRef.current) inputRef.current.value = '';
+    }, [resetKey]);
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();

@@ -1,5 +1,5 @@
 
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { Home } from './pages/Home';
 import { Login } from './pages/auth/Login';
 import { Register } from './pages/auth/Register';
@@ -15,6 +15,13 @@ import { AdminLogin } from './pages/admin/AdminLogin';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { Navbar } from './components/Navbar';
 import { Outlet } from 'react-router-dom';
+// Employer Portal Pages
+import { EmployerDashboardPage } from './pages/employer/EmployerDashboardPage';
+import { EmployerProfilePage } from './pages/employer/EmployerProfilePage';
+import { CompanyVerificationPage } from './pages/employer/CompanyVerificationPage';
+import { EmployeeManagementPage } from './pages/employer/EmployeeManagementPage';
+import { VerifiedEmployeesPage } from './pages/employer/VerifiedEmployeesPage';
+import { VerificationRequestsPage } from './pages/employer/VerificationRequestsPage';
 
 const Layout = () => (
     <>
@@ -32,15 +39,22 @@ export const router = createBrowserRouter([
             { path: '/login', element: <Login /> },
             { path: '/register', element: <Register /> },
             { path: '/registration-success', element: <RegistrationSuccess /> },
-            { path: '/dashboard/employer', element: <EmployerDashboard /> },
+            { path: '/dashboard/employer', element: <Navigate to="/employer/dashboard" replace /> },
             { path: '/dashboard/employee', element: <EmployeeDashboard /> },
             { path: '/jobs', element: <JobFeed /> },
             { path: '/jobs/:id', element: <JobDetails /> },
             { path: '/my-applications', element: <MyApplications /> },
-            { path: '/employer/jobs', element: <EmployerJobs /> },
-            { path: '/employer/jobs/:id/applicants', element: <ApplicantsList /> },
             { path: '/admin-login', element: <AdminLogin /> },
         ]
     },
     { path: '/admin', element: <AdminDashboard /> },
+    // Employer Portal — uses its own sidebar layout (no Navbar)
+    { path: '/employer/dashboard', element: <EmployerDashboardPage /> },
+    { path: '/employer/profile', element: <EmployerProfilePage /> },
+    { path: '/employer/company-verification', element: <CompanyVerificationPage /> },
+    { path: '/employer/employees', element: <EmployeeManagementPage /> },
+    { path: '/employer/verified-employees', element: <VerifiedEmployeesPage /> },
+    { path: '/employer/verification-requests', element: <VerificationRequestsPage /> },
+    { path: '/employer/jobs', element: <EmployerJobs /> },
+    { path: '/employer/jobs/:id/applicants', element: <ApplicantsList /> },
 ]);

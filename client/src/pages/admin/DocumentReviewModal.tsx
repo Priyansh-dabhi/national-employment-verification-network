@@ -5,11 +5,12 @@ import './Admin.css';
 
 interface DocumentReviewModalProps {
     documentId: string;
+    userRole: string;
     onClose: () => void;
     onActionCompleted: () => void;
 }
 
-export const DocumentReviewModal = ({ documentId, onClose, onActionCompleted }: DocumentReviewModalProps) => {
+export const DocumentReviewModal = ({ documentId, userRole, onClose, onActionCompleted }: DocumentReviewModalProps) => {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -21,7 +22,7 @@ export const DocumentReviewModal = ({ documentId, onClose, onActionCompleted }: 
     useEffect(() => {
         const fetchDoc = async () => {
             try {
-                const result = await adminService.getDocumentById(documentId);
+                const result = await adminService.getDocumentById(documentId, userRole);
                 setData(result);
             } catch (err: any) {
                 setError(err.message || 'Failed to load document');
@@ -45,7 +46,7 @@ export const DocumentReviewModal = ({ documentId, onClose, onActionCompleted }: 
 
         try {
             setActionState('EXECUTING');
-            await adminService.adminAction(documentId, actionType, reason);
+            await adminService.adminAction(documentId, actionType, reason, userRole);
             onActionCompleted();
             onClose();
         } catch (err: any) {
@@ -116,7 +117,7 @@ export const DocumentReviewModal = ({ documentId, onClose, onActionCompleted }: 
                                     <h3 className="admin-modal-section-title">User Data (Submitted)</h3>
                                     <div className="admin-modal-data-grid">
                                         <div>
-                                            <p className="admin-modal-data-label">Full Name</p>
+                                            <p className="admin-modal-data-label">{userRole === 'EMPLOYER' ? 'Organization Name' : 'Full Name'}</p>
                                             <p className="admin-modal-data-val">{data.document.full_name}</p>
                                         </div>
                                         <div>
@@ -124,8 +125,13 @@ export const DocumentReviewModal = ({ documentId, onClose, onActionCompleted }: 
                                             <p className="admin-modal-data-val">{data.document.document_type}</p>
                                         </div>
                                         <div>
-                                            <p className="admin-modal-data-label">DOB / Gender</p>
-                                            <p className="admin-modal-data-val">{new Date(data.document.date_of_birth).toLocaleDateString()} / {data.document.gender}</p>
+                                            <p className="admin-modal-data-label">{userRole === 'EMPLOYER' ? 'Type / Industry' : 'DOB / Gender'}</p>
+                                            <p className="admin-modal-data-val">
+                                                {userRole === 'EMPLOYER' 
+                                                    ? `${data.document.org_type || '-'} / ${data.document.industry_sector || '-'}`
+                                                    : `${new Date(data.document.date_of_birth).toLocaleDateString()} / ${data.document.gender}`
+                                                }
+                                            </p>
                                         </div>
                                     </div>
                                 </div>

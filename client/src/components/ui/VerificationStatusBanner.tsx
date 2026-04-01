@@ -95,18 +95,24 @@ export const VerificationStatusBanner: React.FC<VerificationStatusBannerProps> =
                 </div>
             </div>
 
-            {content.action && onApply && (
-                <Button
-                    onClick={onApply}
-                    style={{
-                        background: content.color,
-                        color: '#fff',
-                        border: 'none',
-                        fontWeight: 600
-                    }}
-                >
-                    Apply for Verification
-                </Button>
+            {content.action && (
+                onApply ? (
+                    <Button
+                        onClick={onApply}
+                        style={{
+                            background: content.color,
+                            color: '#fff',
+                            border: 'none',
+                            fontWeight: 600
+                        }}
+                    >
+                        Apply for Verification
+                    </Button>
+                ) : (
+                    <p style={{ fontSize: '0.82rem', color: '#f97316', fontStyle: 'italic', maxWidth: '220px', textAlign: 'right' }}>
+                        Upload a document first to apply for verification.
+                    </p>
+                )
             )}
         </div>
     );

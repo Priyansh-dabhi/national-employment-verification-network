@@ -25,6 +25,7 @@ export const EmployeeDashboard = () => {
     const [activeTab, setActiveTab] = useState<'profile' | 'verification' | 'documents'>('documents');
     const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>('unverified');
     const [rejectionReason, setRejectionReason] = useState<string>('');
+    const [fileUploadResetKey, setFileUploadResetKey] = useState(0);
 
     useEffect(() => {
         const fetchProfileAndDocs = async () => {
@@ -80,6 +81,8 @@ export const EmployeeDashboard = () => {
             setIsModalOpen(false);
             setSelectedFile(null);
             setActiveTab('documents');
+            // Increment key to trigger reset of the FileUpload widget
+            setFileUploadResetKey(k => k + 1);
         } catch (error) {
             console.error("Upload failed", error);
         }
@@ -128,7 +131,7 @@ export const EmployeeDashboard = () => {
                 status={verificationStatus}
                 userRole="employee"
                 feedbackReason={rejectionReason}
-                onApply={handleApplyForVerification}
+                onApply={documents.length > 0 ? handleApplyForVerification : undefined}
             />
 
             {/* Tabs */}
@@ -285,7 +288,7 @@ export const EmployeeDashboard = () => {
                         <div>
                             <Card style={{ position: 'sticky', top: '120px' }}>
                                 <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1rem' }}>Quick Actions</h3>
-                                <FileUpload onFileSelect={handleFileSelect} />
+                                <FileUpload onFileSelect={handleFileSelect} resetKey={fileUploadResetKey} />
                                 <div style={{ marginTop: '1.5rem' }}>
                                     <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>Recent Activity</h4>
                                     {documents.length > 0 ? (

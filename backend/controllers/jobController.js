@@ -1,3 +1,5 @@
+
+
 import { pool } from '../config/db.js';
 
 // 1. Create Job (Employer Only)

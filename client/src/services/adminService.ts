@@ -28,7 +28,7 @@ export const adminService = {
         localStorage.removeItem('nevn_admin_token');
     },
 
-    getReviewDocuments: async (): Promise<{ summary: any; documents: any[] }> => {
+    getReviewDocuments: async (): Promise<{ summary: any; employeeDocuments: any[]; employerDocuments: any[] }> => {
         const token = localStorage.getItem('nevn_admin_token');
         const response = await fetch(`${API_URL}/review-documents`, {
             headers: {
@@ -43,9 +43,9 @@ export const adminService = {
         return await response.json();
     },
 
-    getDocumentById: async (id: string): Promise<{ document: any; verificationLog: any }> => {
+    getDocumentById: async (id: string, role: string): Promise<{ document: any; verificationLog: any }> => {
         const token = localStorage.getItem('nevn_admin_token');
-        const response = await fetch(`${API_URL}/document/${id}`, {
+        const response = await fetch(`${API_URL}/document/${id}?role=${role}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -58,7 +58,7 @@ export const adminService = {
         return await response.json();
     },
 
-    adminAction: async (documentId: string, action: 'APPROVE' | 'REJECT' | 'REUPLOAD', reason?: string): Promise<any> => {
+    adminAction: async (documentId: string, action: 'APPROVE' | 'REJECT' | 'REUPLOAD', reason: string | undefined, role: string): Promise<any> => {
         const token = localStorage.getItem('nevn_admin_token');
         const response = await fetch(`${API_URL}/action`, {
             method: 'POST',
@@ -66,7 +66,7 @@ export const adminService = {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ documentId, action, reason })
+            body: JSON.stringify({ documentId, action, reason, role })
         });
 
         if (!response.ok) {

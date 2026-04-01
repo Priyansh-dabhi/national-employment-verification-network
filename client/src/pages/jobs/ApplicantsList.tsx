@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { authService } from '../../services/authService';
+import { employerService } from '../../services/employerService';
 import { jobService } from '../../services/jobService';
 import type { JobApplicant } from '../../services/jobService';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, User, Mail, Calendar, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { EmployerLayout } from '../employer/EmployerLayout';
 
 export const ApplicantsList = () => {
     const { id } = useParams<{ id: string }>();
@@ -17,10 +18,10 @@ export const ApplicantsList = () => {
     useEffect(() => {
         const fetchApplicants = async () => {
             try {
-                const profile = await authService.getProfile();
+                const data = await employerService.getProfile();
                 
-                if (profile.user.account_status !== 'VERIFIED') {
-                    navigate('/dashboard/employer');
+                if (data.profile?.account_status !== 'VERIFIED') {
+                    navigate('/employer/jobs');
                     return;
                 }
 
@@ -39,15 +40,20 @@ export const ApplicantsList = () => {
     }, [id, navigate]);
 
     if (isLoading) {
-        return <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '100px' }}>Loading applicants...</div>;
+        return (
+            <EmployerLayout>
+                <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '5rem', color: 'var(--color-text-muted)' }}>Loading applicants...</div>
+            </EmployerLayout>
+        );
     }
 
     return (
-        <div className="container" style={{ paddingTop: '100px', paddingBottom: '4rem' }}>
-            <div style={{ marginBottom: '2rem' }}>
-                <Link to="/employer/jobs" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-highlight)', marginBottom: '1rem', textDecoration: 'none', fontWeight: 500 }}>
-                    <ArrowLeft size={16} /> Back to My Jobs
-                </Link>
+        <EmployerLayout>
+            <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+                <div style={{ marginBottom: '2rem' }}>
+                    <Link to="/employer/jobs" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-highlight)', marginBottom: '1rem', textDecoration: 'none', fontWeight: 500 }}>
+                        <ArrowLeft size={16} /> Back to Job Postings
+                    </Link>
                 <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>Job Applicants</h1>
                 <p style={{ color: 'var(--color-text-muted)' }}>Review verified candidates who applied for this position.</p>
             </div>
@@ -111,6 +117,7 @@ export const ApplicantsList = () => {
                     ))
                 )}
             </div>
-        </div>
+            </div>
+        </EmployerLayout>
     );
 };

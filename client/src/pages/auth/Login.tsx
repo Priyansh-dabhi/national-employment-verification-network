@@ -23,7 +23,7 @@ export const Login = () => {
             if (user.role === 'employee') {
                 navigate('/dashboard/employee');
             } else if (user.role === 'employer') {
-                navigate('/dashboard/employer');
+                navigate('/employer/dashboard');
             }
         } catch (error) {
             console.error("Login failed", error);

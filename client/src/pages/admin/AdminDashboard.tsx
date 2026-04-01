@@ -8,16 +8,19 @@ import './Admin.css';
 export const AdminDashboard = () => {
     const navigate = useNavigate();
     const [summary, setSummary] = useState<any>(null);
-    const [documents, setDocuments] = useState<any[]>([]);
+    const [employeeDocs, setEmployeeDocs] = useState<any[]>([]);
+    const [employerDocs, setEmployerDocs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
+    const [selectedDoc, setSelectedDoc] = useState<{ id: string; role: string } | null>(null);
+    const [activeTab, setActiveTab] = useState<'EMPLOYEE' | 'EMPLOYER'>('EMPLOYEE');
 
     const fetchData = async () => {
         setLoading(true);
         try {
             const data = await adminService.getReviewDocuments();
             setSummary(data.summary);
-            setDocuments(data.documents);
+            setEmployeeDocs(data.employeeDocuments || []);
+            setEmployerDocs(data.employerDocuments || []);
         } catch (err: any) {
             console.error(err);
             if (err.message.includes('No token') || err.message.includes('Forbidden')) {
@@ -92,10 +95,36 @@ export const AdminDashboard = () => {
                     </div>
                 </div>
 
+                {/* Tabs */}
+                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', padding: '0 1rem' }}>
+                    <button 
+                        onClick={() => setActiveTab('EMPLOYEE')}
+                        style={{
+                            padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 600,
+                            background: activeTab === 'EMPLOYEE' ? '#38bdf8' : '#1e293b',
+                            color: activeTab === 'EMPLOYEE' ? '#0f172a' : '#cbd5e1',
+                            border: 'none', cursor: 'pointer', transition: 'all 0.2s'
+                        }}
+                    >
+                        Employee Reviews ({employeeDocs.length})
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('EMPLOYER')}
+                        style={{
+                            padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 600,
+                            background: activeTab === 'EMPLOYER' ? '#38bdf8' : '#1e293b',
+                            color: activeTab === 'EMPLOYER' ? '#0f172a' : '#cbd5e1',
+                            border: 'none', cursor: 'pointer', transition: 'all 0.2s'
+                        }}
+                    >
+                        Employer Reviews ({employerDocs.length})
+                    </button>
+                </div>
+
                 {/* Table */}
                 <div className="admin-table-container">
                     <div className="admin-table-header">
-                        <h2 className="admin-table-title">Review Queue</h2>
+                        <h2 className="admin-table-title">{activeTab === 'EMPLOYEE' ? 'Employee Queue' : 'Employer Queue'}</h2>
                         <div className="admin-table-subtitle">Sorted by Oldest First</div>
                     </div>
                     
@@ -104,43 +133,42 @@ export const AdminDashboard = () => {
                             <thead>
                                 <tr>
                                     <th>Document ID</th>
-                                    <th>Applicant</th>
+                                    <th>{activeTab === 'EMPLOYEE' ? 'Applicant Name' : 'Organization Name'}</th>
                                     <th>Type</th>
                                     <th>Submission Date</th>
                                     <th>Status</th>
-                                    <th>Auto Score</th>
+                                    {activeTab === 'EMPLOYEE' && <th>Auto Score</th>}
                                     <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={7} style={{ textAlign: 'center', padding: '2.5rem', color: '#64748b' }}>
+                                        <td colSpan={activeTab === 'EMPLOYEE' ? 7 : 6} style={{ textAlign: 'center', padding: '2.5rem', color: '#64748b' }}>
                                             <Loader2 size={24} style={{ margin: '0 auto 0.5rem auto', animation: 'spin 1s linear infinite', color: '#6366f1' }} />
                                             Loading Queue...
                                         </td>
                                     </tr>
-                                ) : documents.length === 0 ? (
+                                ) : (activeTab === 'EMPLOYEE' ? employeeDocs : employerDocs).length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} style={{ textAlign: 'center', padding: '2.5rem', color: '#64748b', background: 'rgba(248, 250, 252, 0.5)' }}>
-                                            No documents require manual review at this time.
+                                        <td colSpan={activeTab === 'EMPLOYEE' ? 7 : 6} style={{ textAlign: 'center', padding: '2.5rem', color: '#64748b', background: 'rgba(248, 250, 252, 0.5)' }}>
+                                            No {activeTab.toLowerCase()} documents require manual review at this time.
                                         </td>
                                     </tr>
                                 ) : (
-                                    documents.map((doc: any, idx: number) => (
+                                    (activeTab === 'EMPLOYEE' ? employeeDocs : employerDocs).map((doc: any, idx: number) => (
                                         <tr key={idx}>
                                             <td>#{doc.documentId}</td>
                                             <td>
                                                 <span className="admin-table-cell-name">{doc.userName}</span> 
-                                                <span className="admin-table-cell-role">({doc.userRole})</span>
                                             </td>
                                             <td className="admin-table-cell-type">{doc.documentType}</td>
                                             <td className="admin-table-cell-date">{new Date(doc.uploadedAt).toLocaleString()}</td>
                                             <td>{getStatusChip(doc.status)}</td>
-                                            <td className="admin-table-cell-score">{doc.score || '-'}</td>
+                                            {activeTab === 'EMPLOYEE' && <td className="admin-table-cell-score">{doc.score || '-'}</td>}
                                             <td>
                                                 <button 
-                                                    onClick={() => setSelectedDocId(doc.documentId)}
+                                                    onClick={() => setSelectedDoc({ id: doc.documentId, role: doc.userRole })}
                                                     className="admin-action-btn"
                                                 >
                                                     {doc.status === 'UNDER_REVIEW' || doc.status === 'PENDING' ? 'Review Now' : 'View File'}
@@ -155,10 +183,11 @@ export const AdminDashboard = () => {
                 </div>
             </main>
 
-            {selectedDocId && (
+            {selectedDoc && (
                 <DocumentReviewModal 
-                    documentId={selectedDocId} 
-                    onClose={() => setSelectedDocId(null)} 
+                    documentId={selectedDoc.id} 
+                    userRole={selectedDoc.role}
+                    onClose={() => setSelectedDoc(null)} 
                     onActionCompleted={fetchData} 
                 />
             )}

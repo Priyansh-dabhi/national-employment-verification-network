@@ -19,18 +19,21 @@ export const authService = {
 
         const result = await response.json();
 
-        // Store token in localStorage (optional, but good practice for persistence)
+        // Persist auth info to localStorage for Navbar and other components
         if (result.token) {
             localStorage.setItem('nevn_token', result.token);
+        }
+        if (result.role) {
+            localStorage.setItem('nevn_role', result.role);
+        }
+        if (result.account_status) {
+            localStorage.setItem('nevn_account_status', result.account_status);
         }
 
         return {
             user: {
                 ...result.user,
                 role: result.role,
-                // Map backend user fields to frontend User type if necessary
-                // Backend returns: id, name, email. Frontend User type might expect more.
-                // Assuming simple mapping for now.
             },
             token: result.token
         };
@@ -58,7 +61,17 @@ export const authService = {
             throw new Error('Failed to fetch profile');
         }
 
-        return await response.json();
+        const data = await response.json();
+
+        // Keep localStorage in sync with latest account_status from server
+        if (data.user?.account_status) {
+            localStorage.setItem('nevn_account_status', data.user.account_status);
+        }
+        if (data.role) {
+            localStorage.setItem('nevn_role', data.role);
+        }
+
+        return data;
     },
 
     register: async (data: any): Promise<{ user: User; token: string }> => {

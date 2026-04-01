@@ -128,6 +128,41 @@ const createTables = async () => {
         );
     `;
 
+    const createEmployerDocumentsTable = `
+        CREATE TABLE IF NOT EXISTS employer_documents (
+            id SERIAL PRIMARY KEY,
+            employer_id INTEGER REFERENCES employers(id) ON DELETE CASCADE,
+            document_type VARCHAR(100),
+            public_id VARCHAR(255),
+            verification_status VARCHAR(20) DEFAULT 'PENDING',
+            uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    `;
+
+    const createEmployerVerificationRequestsTable = `
+        CREATE TABLE IF NOT EXISTS employer_verification_requests (
+            id SERIAL PRIMARY KEY,
+            employer_id INTEGER,
+            status VARCHAR(20) DEFAULT 'PENDING',
+            submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            reviewed_at TIMESTAMP,
+            remarks TEXT
+        );
+    `;
+
+    const createCompanyEmployeesTable = `
+        CREATE TABLE IF NOT EXISTS company_employees (
+            id SERIAL PRIMARY KEY,
+            employer_id INTEGER REFERENCES employers(id) ON DELETE CASCADE,
+            employee_id INTEGER REFERENCES employees(id) ON DELETE CASCADE,
+            position VARCHAR(255),
+            status VARCHAR(20) DEFAULT 'ACTIVE',
+            joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            left_at TIMESTAMP,
+            UNIQUE(employer_id, employee_id)
+        );
+    `;
+
     try {
         const client = await pool.connect();
         await client.query(createEmployeesTable);
@@ -139,6 +174,9 @@ const createTables = async () => {
         await client.query(createVerifiedIDsTable);
         await client.query(createVerificationLogsTable);
         await client.query(createBlockchainRecordsTable);
+        await client.query(createEmployerDocumentsTable);
+        await client.query(createEmployerVerificationRequestsTable);
+        await client.query(createCompanyEmployeesTable);
         console.log('Tables created or already exist');
         client.release();
     } catch (err) {
