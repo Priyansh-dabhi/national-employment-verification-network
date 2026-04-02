@@ -36,12 +36,13 @@ fabric-samples/
 
 # ========================================
 # Ignore generated crypto material
+# (Commented out to push the entire network folder to GitHub)
 # ========================================
-nevs-ledger/network/organizations/ordererOrganizations/
-nevs-ledger/network/organizations/peerOrganizations/
+# nevs-ledger/network/organizations/ordererOrganizations/
+# nevs-ledger/network/organizations/peerOrganizations/
 nevs-ledger/network/organizations/organizations
-nevs-ledger/network/system-genesis-block/
-nevs-ledger/network/channel-artifacts/
+# nevs-ledger/network/system-genesis-block/
+# nevs-ledger/network/channel-artifacts/
 
 # ========================================
 # Ignore logs
