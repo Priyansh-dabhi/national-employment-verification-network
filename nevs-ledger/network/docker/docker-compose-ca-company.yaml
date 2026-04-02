@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  ca.company.org:
+    image: hyperledger/fabric-ca:1.5.7
+    container_name: ca.company.org
+    environment:
+      - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_SERVER_CA_NAME=ca-company-org
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_PORT=7054
+    ports:
+      - "9054:7054"
+    volumes:
+      - ../organizations/peerOrganizations/company.org/ca:/etc/hyperledger/fabric-ca-server
+    command: sh -c 'fabric-ca-server start -b admin:adminpw -d'
+    networks:
+      - nevs_net
+
+networks:
+  nevs_net:
+    external: true
+    name: nevs_network

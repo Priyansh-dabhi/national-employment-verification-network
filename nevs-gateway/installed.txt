@@ -1,0 +1,8 @@
+Installed chaincodes on peer:
+Package ID: nevs_1.0:873cb302e72390355766266455eb18287639aad11b3ce05e9d8f3c317ccbec40, Label: nevs_1.0
+Package ID: nevs_1.1:e7cb17821ecb0fc362b43183d6608981fcc7bbb2e951fc03630729fe8397a63c, Label: nevs_1.1
+Package ID: nevs_1.2:3db65cbe17242c845d12c211acc4fde329c5aa6f9b8abfbff3701495148a40c3, Label: nevs_1.2
+Package ID: nevs_1.2:e1478feb63cbf32cf43427c355e3bbc4e7684c818d3996bc6bcb69dc50fb2252, Label: nevs_1.2
+Package ID: nevs_1.3:cad0dd1c70c730f54f6813ca494b6007f338f6be421ca4144eafa527dfb7a8ec, Label: nevs_1.3
+Package ID: nevs_1.4:761cf29469324907cf9fa338dd993a4639b3d2a0d73be8afa94c8ed76e0ee804, Label: nevs_1.4
+Package ID: employment-cc:4d44c38cb66af98ca3a83e283c5dcb43a46f9060faff4ec1b086719501517fb0, Label: employment-cc

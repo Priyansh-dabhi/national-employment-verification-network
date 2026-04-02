@@ -1,0 +1,65 @@
+# ========================================
+# Ignore ALL files in root directory
+# (keep only subdirectories)
+# ========================================
+/*
+!/*/
+!.gitignore
+
+# ========================================
+# Ignore fabric-samples entirely
+# ========================================
+fabric-samples/
+
+# ========================================
+# Ignore node_modules everywhere
+# ========================================
+**/node_modules/
+
+# ========================================
+# Ignore Go vendor directories
+# ========================================
+**/vendor/
+
+# ========================================
+# Ignore compiled binaries
+# ========================================
+*.exe
+*.dll
+*.so
+*.dylib
+
+# ========================================
+# Ignore build artifacts & archives
+# ========================================
+**/*.tar.gz
+
+# ========================================
+# Ignore generated crypto material
+# ========================================
+nevs-ledger/network/organizations/ordererOrganizations/
+nevs-ledger/network/organizations/peerOrganizations/
+nevs-ledger/network/organizations/organizations
+nevs-ledger/network/system-genesis-block/
+nevs-ledger/network/channel-artifacts/
+
+# ========================================
+# Ignore logs
+# ========================================
+**/*.log
+
+# ========================================
+# Ignore environment & secret files
+# ========================================
+**/.env
+
+# ========================================
+# Ignore wallet credentials
+# ========================================
+nevs-gateway/wallet/
+
+# ========================================
+# Ignore OS files
+# ========================================
+.DS_Store
+Thumbs.db

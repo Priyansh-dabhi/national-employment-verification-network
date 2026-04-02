@@ -1,0 +1,35 @@
+version: '3.7'
+
+networks:
+  nevs_net:
+    external: true
+    name: nevs_network
+
+services:
+  peer0.company.org:
+    image: hyperledger/fabric-peer:2.5
+    container_name: peer0.company.org
+    environment:
+      # CCaaS external builder connection
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_PEER_CHAINCODEADDRESS=peer0.company.org:9052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:9052
+      - CORE_PEER_ID=peer0.company.org
+      - CORE_PEER_ADDRESS=peer0.company.org:9051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:9051
+      - CORE_PEER_LOCALMSPID=CompanyOrgMSP
+      - CORE_PEER_MSPCONFIGPATH=/var/hyperledger/peer/msp
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/var/hyperledger/peer/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/var/hyperledger/peer/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/var/hyperledger/peer/tls/ca.crt
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.company.org:9051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.company.org:9051
+    volumes:
+      - /var/run/docker.sock:/host/var/run/docker.sock
+      - ../organizations/peerOrganizations/company.org/peers/peer0.company.org/msp:/var/hyperledger/peer/msp
+      - ../organizations/peerOrganizations/company.org/peers/peer0.company.org/tls:/var/hyperledger/peer/tls
+    ports:
+      - "9051:9051"
+    networks:
+      - nevs_net
