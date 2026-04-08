@@ -17,8 +17,18 @@ services:
       - MSPID=CentralGovtMSP
       - CHANNEL_NAME=nevs-channel
       - CHAINCODE_NAME=employment
+      - CHAINCODE_NAME_V2=nevs
       - CONNECTION_PROFILE_PATH=/app/config/connection-profile.json
       - WALLET_PATH=/app/wallet
+      - FABRIC_CA_URL=https://ca.central.govt:7054
+      - FABRIC_CA_NAME=ca-central-govt
+      - FABRIC_CA_ADMIN=admin
+      - FABRIC_CA_ADMIN_PW=adminpw
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY:-nevs-internal-secret-key}
+      - WEBHOOK_BASE_URL=${WEBHOOK_BASE_URL:-http://host.docker.internal:4000}
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET:-nevs-webhook-hmac-secret}
+      - EVENT_LISTENER_ENABLED=true
+      - EVENT_RETRY_MAX=5
     volumes:
       - ./config:/app/config
       - ./wallet:/app/wallet

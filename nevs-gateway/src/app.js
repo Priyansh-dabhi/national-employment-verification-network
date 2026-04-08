@@ -18,6 +18,10 @@ const godModeRoutes = require('./routes/godModeRoutes');
 app.use('/api/godmode', godModeRoutes);
 app.use('/api/employment', employmentRoutes);
 
+// Phase 4 Routes
+const internalRoutes = require('./routes/internalRoutes');
+app.use('/api/internal', internalRoutes);
+
 // Phase 2 Routes
 app.use('/api/v2/govt', govtRoutes);
 app.use('/api/v2/company', companyRoutes);
