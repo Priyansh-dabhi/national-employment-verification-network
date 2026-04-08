@@ -4,116 +4,111 @@ import { Button } from './Button';
 import type { VerificationStatus, UserRole } from '../../types';
 
 interface VerificationStatusBannerProps {
-    status: VerificationStatus;
-    userRole: UserRole;
-    feedbackReason?: string;
-    onApply?: () => void;
+  status: VerificationStatus;
+  userRole: UserRole;
+  feedbackReason?: string;
+  onApply?: () => void;
+  isApplying?: boolean;
 }
 
-export const VerificationStatusBanner: React.FC<VerificationStatusBannerProps> = ({ status, feedbackReason, onApply }) => {
-    const getContent = () => {
-        switch (status) {
-            case 'verified':
-                return {
-                    icon: <ShieldCheck size={24} color="#22c55e" />,
-                    title: "Verified Account",
-                    message: "Your account is fully verified by the Government Authority.",
-                    color: "var(--color-success)",
-                    bg: "rgba(34, 197, 94, 0.1)",
-                    border: "rgba(34, 197, 94, 0.2)"
-                };
-            case 'pending':
-                return {
-                    icon: <Clock size={24} color="#eab308" />,
-                    title: "Verification Pending",
-                    message: "Your verification request is under review by the Government Authority.",
-                    color: "var(--color-warning)",
-                    bg: "rgba(234, 179, 8, 0.1)",
-                    border: "rgba(234, 179, 8, 0.2)"
-                };
-            case 'rejected':
-                return {
-                    icon: <ShieldAlert size={24} color="#ef4444" />,
-                    title: "Verification Rejected",
-                    message: "Your verification request was rejected. Please update your documents and try again.",
-                    color: "var(--color-error)",
-                    bg: "rgba(239, 68, 68, 0.1)",
-                    border: "rgba(239, 68, 68, 0.2)"
-                };
-            case 'unverified':
-            default:
-                return {
-                    icon: <AlertTriangle size={24} color="#f97316" />,
-                    title: "Account Not Verified",
-                    message: "Apply for verification to unlock full access to the platform.",
-                    color: "#f97316",
-                    bg: "rgba(249, 115, 22, 0.1)",
-                    border: "rgba(249, 115, 22, 0.2)",
-                    action: true
-                };
-        }
-    };
+export const VerificationStatusBanner: React.FC<VerificationStatusBannerProps> = ({
+  status,
+  userRole,
+  feedbackReason,
+  onApply,
+  isApplying = false,
+}) => {
+  const normalized = status.toLowerCase() as VerificationStatus;
 
-    const content = getContent();
+  const configMap = {
+    verified: {
+      icon: ShieldCheck,
+      title: 'Verification complete',
+      color: 'var(--color-success)',
+      border: '#bbf7d0',
+      bg: '#f0fdf4',
+      message: 'Your account is verified and all gated features are unlocked.',
+    },
+    pending: {
+      icon: Clock,
+      title: 'Verification in progress',
+      color: 'var(--color-warning)',
+      border: '#fcd34d',
+      bg: '#fffbeb',
+      message: 'Your submitted details are being reviewed by the authority team.',
+    },
+    rejected: {
+      icon: ShieldAlert,
+      title: 'Verification rejected',
+      color: 'var(--color-error)',
+      border: '#fecaca',
+      bg: '#fef2f2',
+      message: 'Please update the required details and submit again.',
+    },
+    unverified: {
+      icon: AlertTriangle,
+      title: 'Verification required',
+      color: '#b45309',
+      border: '#fcd34d',
+      bg: '#fffbeb',
+      message: 'Start the verification flow to unlock full portal functionality.',
+    },
+  } as const;
 
-    return (
-        <div style={{
-            background: content.bg,
-            border: `1px solid ${content.border}`,
-            borderRadius: 'var(--radius-lg)',
-            padding: '1.5rem',
-            marginBottom: '2rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '1rem',
-            flexWrap: 'wrap'
-        }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{
-                    padding: '0.75rem',
-                    background: 'rgba(0,0,0,0.2)',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                }}>
-                    {content.icon}
-                </div>
-                <div>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: content.color, marginBottom: '0.25rem' }}>
-                        {content.title}
-                    </h3>
-                    <p style={{ color: 'var(--color-text-muted)', fontSize: '0.95rem' }}>
-                        {content.message}
-                    </p>
-                    {feedbackReason && status === 'rejected' && (
-                        <div className="mt-2 text-sm bg-red-100 text-red-800 p-2 rounded-md border border-red-200">
-                            <strong>Admin Feedback:</strong> {feedbackReason}
-                        </div>
-                    )}
-                </div>
-            </div>
+  const cfg = configMap[normalized] ?? configMap.unverified;
+  const Icon = cfg.icon;
 
-            {content.action && (
-                onApply ? (
-                    <Button
-                        onClick={onApply}
-                        style={{
-                            background: content.color,
-                            color: '#fff',
-                            border: 'none',
-                            fontWeight: 600
-                        }}
-                    >
-                        Apply for Verification
-                    </Button>
-                ) : (
-                    <p style={{ fontSize: '0.82rem', color: '#f97316', fontStyle: 'italic', maxWidth: '220px', textAlign: 'right' }}>
-                        Upload a document first to apply for verification.
-                    </p>
-                )
-            )}
+  return (
+    <div
+      style={{
+        background: cfg.bg,
+        border: `1px solid ${cfg.border}`,
+        borderRadius: 'var(--radius-lg)',
+        padding: '1.1rem 1.2rem',
+        marginBottom: '1.4rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '1rem',
+        flexWrap: 'wrap',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flex: 1, minWidth: '250px' }}>
+        <span
+          style={{
+            width: '38px',
+            height: '38px',
+            borderRadius: '999px',
+            display: 'grid',
+            placeItems: 'center',
+            background: '#ffffff',
+            border: '1px solid rgba(15, 23, 42, 0.08)',
+          }}
+        >
+          <Icon size={20} color={cfg.color} />
+        </span>
+        <div>
+          <h3 style={{ fontSize: '1rem', marginBottom: '0.14rem', color: cfg.color }}>{cfg.title}</h3>
+          <p className="muted" style={{ fontSize: '0.88rem' }}>
+            {cfg.message}
+            {userRole === 'employer' && normalized === 'verified' ? ' You can now add employees and post jobs.' : ''}
+          </p>
+          {normalized === 'rejected' && feedbackReason ? (
+            <p style={{ marginTop: '0.4rem', fontSize: '0.84rem', color: '#b91c1c' }}>
+              Admin feedback: {feedbackReason}
+            </p>
+          ) : null}
         </div>
-    );
+      </div>
+
+      {normalized === 'unverified' &&
+        (onApply ? (
+          <Button onClick={onApply} isLoading={isApplying} size="sm">
+            Apply for verification
+          </Button>
+        ) : (
+          <span style={{ color: '#b45309', fontSize: '0.82rem' }}>Upload at least one document first.</span>
+        ))}
+    </div>
+  );
 };

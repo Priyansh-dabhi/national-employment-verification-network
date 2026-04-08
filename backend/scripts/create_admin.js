@@ -2,16 +2,23 @@ import bcrypt from 'bcrypt';
 import { pool } from '../config/db.js';
 
 const seedAdmin = async () => {
-    const defaultEmail = 'admin@nevn.com';
-    const defaultPassword = 'password123';
-    const defaultFullName = 'System Admin';
+    const defaultEmail = (process.env.ADMIN_EMAIL || 'admin@nevn.com').trim().toLowerCase();
+    const defaultPassword = process.env.ADMIN_PASSWORD || 'password123';
+    const defaultFullName = process.env.ADMIN_FULL_NAME || 'System Admin';
 
     try {
         console.log(`Checking for admin account: ${defaultEmail}...`);
-        const existingAdmin = await pool.query('SELECT * FROM admins WHERE email = $1', [defaultEmail]);
+        const existingAdmin = await pool.query('SELECT * FROM admins WHERE LOWER(email) = $1', [defaultEmail]);
 
         if (existingAdmin.rows.length > 0) {
-            console.log('Admin account already exists.');
+            const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+            await pool.query(
+                `UPDATE admins
+                 SET password = $1, full_name = $2, role = $3
+                 WHERE id = $4`,
+                [hashedPassword, defaultFullName, 'admin', existingAdmin.rows[0].id]
+            );
+            console.log(`Admin account exists. Credentials refreshed for: ${defaultEmail}`);
         } else {
             const hashedPassword = await bcrypt.hash(defaultPassword, 10);
             await pool.query(

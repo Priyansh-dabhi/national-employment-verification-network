@@ -1,55 +1,101 @@
 import type { Employee, VerificationStatus } from '../types';
+import { apiClient } from './apiClient';
 
-const MOCK_EMPLOYEES: Employee[] = [
-    { id: '101', name: 'Alice Smith', position: 'Software Engineer', status: 'verified', lastCheck: '2024-02-01', email: 'alice@example.com' },
-    { id: '102', name: 'Bob Williams', position: 'Product Manager', status: 'pending', lastCheck: '2024-02-03', email: 'bob@example.com' },
-    { id: '103', name: 'Charlie Brown', position: 'Data Analyst', status: 'unverified', lastCheck: '-', email: 'charlie@example.com' },
-    { id: '104', name: 'Diana Prince', position: 'UX Designer', status: 'verified', lastCheck: '2023-11-15', email: 'diana@example.com' },
-];
+const normalizeStatus = (rawStatus?: string): VerificationStatus => {
+  const status = rawStatus?.toUpperCase();
+  if (status === 'VERIFIED') return 'verified';
+  if (status === 'PENDING') return 'pending';
+  if (status === 'REJECTED') return 'rejected';
+  return 'unverified';
+};
+
+const mapEmployeeRecord = (employee: {
+  id: number | string;
+  full_name?: string;
+  name?: string;
+  email?: string;
+  position?: string | null;
+  account_status?: string;
+  employee_status?: string;
+  joined_at?: string;
+  updated_at?: string;
+}): Employee => ({
+  id: String(employee.id),
+  name: employee.full_name || employee.name || 'Unknown Employee',
+  position: employee.position || 'Not specified',
+  status: normalizeStatus(employee.account_status || employee.employee_status),
+  lastCheck: employee.updated_at || employee.joined_at || new Date().toISOString(),
+  email: employee.email || '',
+});
 
 export const verificationService = {
-    searchEmployees: async (query: string): Promise<Employee[]> => {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                const lowerQuery = query.toLowerCase();
-                const results = MOCK_EMPLOYEES.filter(emp =>
-                    emp.name.toLowerCase().includes(lowerQuery) ||
-                    emp.position.toLowerCase().includes(lowerQuery) ||
-                    emp.email.toLowerCase().includes(lowerQuery)
-                );
-                resolve(results);
-            }, 600);
-        });
-    },
+  searchEmployees: async (query: string): Promise<Employee[]> => {
+    const payload = await apiClient.request<{ employees?: Array<Record<string, unknown>> }>('/employer/employees');
+    const employees = (payload?.employees || []) as Array<Parameters<typeof mapEmployeeRecord>[0]>;
 
-    getAllEmployees: async (): Promise<Employee[]> => {
-        return new Promise((resolve) => {
-            setTimeout(() => resolve([...MOCK_EMPLOYEES]), 800);
-        });
-    },
-
-    requestVerification: async (employeeId: string): Promise<Employee> => {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                // Mock finding user or creating a request
-                const exists = MOCK_EMPLOYEES.find(e => e.id === employeeId || e.email === employeeId);
-                if (exists) {
-                    // In a real app, this would create a Request object, but for now we return the Employee
-                    resolve(exists);
-                } else {
-                    // Mock "New Request"
-                    const newReq: Employee = {
-                        id: Date.now().toString(),
-                        name: `Pending User (${employeeId})`,
-                        position: 'Verification Requested',
-                        status: 'pending' as VerificationStatus,
-                        lastCheck: new Date().toISOString().split('T')[0],
-                        email: employeeId
-                    };
-                    MOCK_EMPLOYEES.unshift(newReq);
-                    resolve(newReq);
-                }
-            }, 1200);
-        });
+    if (!query.trim()) {
+      return employees.map(mapEmployeeRecord);
     }
+
+    const needle = query.trim().toLowerCase();
+    return employees
+      .map(mapEmployeeRecord)
+      .filter(
+        (employee) =>
+          employee.name.toLowerCase().includes(needle) ||
+          employee.email.toLowerCase().includes(needle) ||
+          employee.position.toLowerCase().includes(needle),
+      );
+  },
+
+  getAllEmployees: async (): Promise<Employee[]> => {
+    const payload = await apiClient.request<{ employees?: Array<Record<string, unknown>> }>('/employer/employees');
+    const employees = (payload?.employees || []) as Array<Parameters<typeof mapEmployeeRecord>[0]>;
+    return employees.map(mapEmployeeRecord);
+  },
+
+  requestVerification: async (employeeIdOrEmail: string): Promise<Employee> => {
+    const payload = await apiClient.request<{ employee?: Record<string, unknown> }>('/employer/request-verification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        employee_email: employeeIdOrEmail,
+        position: '',
+        reason: '',
+      }),
+    });
+
+    if (!payload?.employee) {
+      throw new Error('Failed to request employee verification');
+    }
+
+    return mapEmployeeRecord(payload.employee as Parameters<typeof mapEmployeeRecord>[0]);
+  },
+
+  applyForVerification: async (): Promise<{ message: string; account_status: string }> => {
+    const payload = await apiClient.request<{ message?: string; account_status?: string }>('/verification/apply', {
+      method: 'POST',
+    });
+
+    return {
+      message: payload?.message || 'Verification request submitted successfully.',
+      account_status: payload?.account_status || 'PENDING',
+    };
+  },
+
+  getVerificationStatus: async (userId: string): Promise<{
+    status: string;
+    score?: number;
+    details_json?: string;
+  }> => {
+    const payload = await apiClient.request<{ status?: string; score?: number; details_json?: string }>(
+      `/verification/status/${userId}`,
+    );
+
+    return {
+      status: payload?.status || 'UNKNOWN',
+      score: payload?.score,
+      details_json: payload?.details_json,
+    };
+  },
 };

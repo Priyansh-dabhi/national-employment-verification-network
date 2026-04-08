@@ -1,120 +1,135 @@
-import { useRef, useState, useEffect } from 'react';
+import { type DragEvent, type MouseEvent, useRef, useState } from 'react';
 import { UploadCloud, FileText, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface FileUploadProps {
-    onFileSelect?: (file: File) => void;
-    label?: string;
-    resetKey?: number; // increment this from parent to force-clear the component
+  onFileSelect?: (file: File) => void;
+  label?: string;
+  accept?: string;
+  maxSizeMb?: number;
 }
 
-export const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, label = "Upload Document", resetKey }) => {
-    const [isDragOver, setIsDragOver] = useState(false);
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const inputRef = useRef<HTMLInputElement>(null);
+export const FileUpload: React.FC<FileUploadProps> = ({
+  onFileSelect,
+  label = 'Upload Document',
+  accept = '.pdf,.jpg,.jpeg,.png',
+  maxSizeMb = 5,
+}) => {
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-    // Reset whenever parent increments resetKey
-    useEffect(() => {
-        setSelectedFile(null);
-        if (inputRef.current) inputRef.current.value = '';
-    }, [resetKey]);
+  const handleFile = (file: File) => {
+    const maxBytes = maxSizeMb * 1024 * 1024;
+    if (file.size > maxBytes) {
+      setError(`File size must be ${maxSizeMb} MB or less.`);
+      return;
+    }
 
-    const handleDragOver = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragOver(true);
-    };
+    setError(null);
+    setSelectedFile(file);
+    onFileSelect?.(file);
+  };
 
-    const handleDragLeave = () => {
-        setIsDragOver(false);
-    };
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragOver(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file) handleFile(file);
+  };
 
-    const handleDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragOver(false);
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            handleFile(e.dataTransfer.files[0]);
-        }
-    };
+  const clearFile = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    setSelectedFile(null);
+    setError(null);
+    if (inputRef.current) inputRef.current.value = '';
+  };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            handleFile(e.target.files[0]);
-        }
-    };
+  return (
+    <div style={{ width: '100%' }}>
+      {label && <label className="field-label">{label}</label>}
 
-    const handleFile = (file: File) => {
-        setSelectedFile(file);
-        if (onFileSelect) onFileSelect(file);
-    };
+      <motion.div
+        whileHover={{ y: -1 }}
+        className={['ui-file-upload', isDragOver ? 'is-drag-over' : '', error ? 'is-error' : ''].filter(Boolean).join(' ')}
+        onClick={() => inputRef.current?.click()}
+        onDragOver={(event) => {
+          event.preventDefault();
+          setIsDragOver(true);
+        }}
+        onDragLeave={() => setIsDragOver(false)}
+        onDrop={handleDrop}
+      >
+        <input
+          ref={inputRef}
+          type="file"
+          accept={accept}
+          style={{ display: 'none' }}
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) handleFile(file);
+          }}
+        />
 
-    const removeFile = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setSelectedFile(null);
-        if (inputRef.current) inputRef.current.value = '';
-    };
-
-    return (
-        <div style={{ width: '100%' }}>
-            {label && <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>{label}</label>}
-            <motion.div
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                onClick={() => inputRef.current?.click()}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                style={{
-                    border: `2px dashed ${isDragOver ? 'var(--color-highlight)' : 'var(--glass-border)'}`,
-                    borderRadius: 'var(--radius-lg)',
-                    padding: '2rem',
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    backgroundColor: isDragOver ? 'rgba(56, 189, 248, 0.05)' : 'transparent',
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '1rem',
-                    minHeight: '160px'
-                }}
+        {selectedFile ? (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.65rem',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+            }}
+          >
+            <FileText color="var(--color-highlight)" size={20} />
+            <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{selectedFile.name}</span>
+            <span className="muted" style={{ fontSize: '0.78rem' }}>
+              ({(selectedFile.size / 1024).toFixed(0)} KB)
+            </span>
+            <button
+              type="button"
+              onClick={clearFile}
+              aria-label="Remove selected file"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fca5a5',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: '999px',
+                padding: '0.22rem',
+              }}
             >
-                <input
-                    type="file"
-                    ref={inputRef}
-                    onChange={handleFileChange}
-                    style={{ display: 'none' }}
-                />
+              <X size={14} />
+            </button>
+          </div>
+        ) : (
+          <>
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '999px',
+                display: 'grid',
+                placeItems: 'center',
+                background: 'rgba(56, 189, 248, 0.14)',
+                color: 'var(--color-highlight)',
+              }}
+            >
+              <UploadCloud size={24} />
+            </div>
+            <div>
+              <p style={{ fontWeight: 700, marginBottom: '0.2rem' }}>Drop file or click to browse</p>
+              <p className="muted" style={{ fontSize: '0.82rem' }}>
+                Supported: {accept} up to {maxSizeMb} MB
+              </p>
+            </div>
+          </>
+        )}
+      </motion.div>
 
-                {selectedFile ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(255,255,255,0.05)', padding: '0.75rem 1.5rem', borderRadius: 'var(--radius-md)' }}>
-                        <FileText color="var(--color-highlight)" />
-                        <span style={{ fontWeight: 500 }}>{selectedFile.name}</span>
-                        <span style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>({(selectedFile.size / 1024).toFixed(0)} KB)</span>
-                        <button
-                            onClick={removeFile}
-                            style={{ background: 'none', border: 'none', color: 'var(--color-error)', marginLeft: '0.5rem', padding: '4px', display: 'flex' }}
-                        >
-                            <X size={16} />
-                        </button>
-                    </div>
-                ) : (
-                    <>
-                        <div style={{
-                            background: 'rgba(56, 189, 248, 0.1)',
-                            padding: '1rem',
-                            borderRadius: '50%',
-                            color: 'var(--color-highlight)'
-                        }}>
-                            <UploadCloud size={32} />
-                        </div>
-                        <div>
-                            <p style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: '0.25rem' }}>Click to upload or drag and drop</p>
-                            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>PDF, JPG, or PNG (max 5MB)</p>
-                        </div>
-                    </>
-                )}
-            </motion.div>
-        </div>
-    );
+      {error ? <p className="field-error">{error}</p> : null}
+    </div>
+  );
 };

@@ -3,105 +3,83 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 
-
 interface ModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    title: string;
-    children: React.ReactNode;
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+  width?: string;
 }
 
-export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
-    useEffect(() => {
-        if (isOpen) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = 'unset';
-        }
-        return () => {
-            document.body.style.overflow = 'unset';
-        };
-    }, [isOpen]);
+export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, width = '560px' }) => {
+  useEffect(() => {
+    if (!isOpen) return;
 
-    return createPortal(
-        <AnimatePresence>
-            {isOpen && (
-                <>
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={onClose}
-                        style={{
-                            position: 'fixed',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            background: 'rgba(0, 0, 0, 0.7)',
-                            backdropFilter: 'blur(4px)',
-                            zIndex: 100
-                        }}
-                    />
-                    <div style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 101,
-                        pointerEvents: 'none'
-                    }}>
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                            style={{
-                                pointerEvents: 'auto',
-                                width: '90%',
-                                maxWidth: '500px',
-                                background: 'var(--color-primary-light)',
-                                border: '1px solid var(--glass-border)',
-                                borderRadius: 'var(--radius-lg)',
-                                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                maxHeight: '90vh'
-                            }}
-                        >
-                            <div style={{
-                                padding: '1.5rem',
-                                borderBottom: '1px solid var(--glass-border)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between'
-                            }}>
-                                <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>{title}</h3>
-                                <button
-                                    onClick={onClose}
-                                    style={{
-                                        background: 'transparent',
-                                        border: 'none',
-                                        color: 'var(--color-text-muted)',
-                                        cursor: 'pointer',
-                                        padding: '0.25rem'
-                                    }}
-                                >
-                                    <X size={20} />
-                                </button>
-                            </div>
+    const originalOverflow = document.body.style.overflow;
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
 
-                            <div style={{ padding: '1.5rem', overflowY: 'auto' }}>
-                                {children}
-                            </div>
-                        </motion.div>
-                    </div>
-                </>
-            )}
-        </AnimatePresence>,
-        document.body
-    );
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onEscape);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', onEscape);
+    };
+  }, [isOpen, onClose]);
+
+  return createPortal(
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.button
+            type="button"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="ui-modal__overlay"
+            aria-label="Close modal"
+          />
+
+          <div
+            className="ui-modal__frame"
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 18, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 18, scale: 0.98 }}
+              transition={{ duration: 0.2 }}
+              role="dialog"
+              aria-modal="true"
+              aria-label={title}
+              onClick={(event) => event.stopPropagation()}
+              style={{
+                width: 'min(96vw, 100%)',
+                maxWidth: width,
+                maxHeight: '90vh',
+              }}
+              className="ui-modal"
+            >
+              <div className="ui-modal__header">
+                <h3 style={{ fontSize: '1.08rem', fontWeight: 700 }}>{title}</h3>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="ui-modal__close"
+                  aria-label="Close"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="ui-modal__content">{children}</div>
+            </motion.div>
+          </div>
+        </>
+      )}
+    </AnimatePresence>,
+    document.body,
+  );
 };

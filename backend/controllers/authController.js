@@ -1,6 +1,93 @@
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 import { pool } from '../config/db.js';
+import {
+    REFRESH_COOKIE_NAME,
+    clearRefreshTokenCookie,
+    getCookieValue,
+    getRefreshExpiryDate,
+    hashToken,
+    setRefreshTokenCookie,
+    signAccessToken,
+    signRefreshToken,
+    verifyRefreshToken,
+} from '../utils/authTokens.js';
+
+const getUserQueryByRole = (role) => {
+    if (role === 'employee') {
+        return {
+            authQuery: 'SELECT * FROM employees WHERE email = $1',
+            profileQuery: `SELECT id, email, full_name, mobile, date_of_birth, gender, employment_status, city, state, account_status 
+                 FROM employees WHERE id = $1`,
+        };
+    }
+
+    return {
+        authQuery: 'SELECT * FROM employers WHERE email = $1',
+        profileQuery: `SELECT id, email, organization_name, org_type, industry_sector, authorized_person_name, designation, mobile, city, state, account_status 
+                 FROM employers WHERE id = $1`,
+    };
+};
+
+const mapLoginUser = (user, role) => ({
+    id: user.id,
+    name: role === 'employee' ? user.full_name : user.organization_name,
+    email: user.email,
+});
+
+const issueTokensForUser = async (res, user) => {
+    const tokenPayload = {
+        id: user.id,
+        role: user.role,
+        account_status: user.account_status,
+    };
+
+    const accessToken = signAccessToken(tokenPayload);
+    const refreshToken = signRefreshToken({ id: user.id, role: user.role });
+
+    await pool.query(
+        `INSERT INTO refresh_tokens (user_id, role, token_hash, expires_at)
+         VALUES ($1, $2, $3, $4)`,
+        [user.id, user.role, hashToken(refreshToken), getRefreshExpiryDate()],
+    );
+
+    setRefreshTokenCookie(res, refreshToken);
+
+    return accessToken;
+};
+
+const rotateRefreshToken = async (res, storedTokenId, user) => {
+    const accessToken = signAccessToken({
+        id: user.id,
+        role: user.role,
+        account_status: user.account_status,
+    });
+    const refreshToken = signRefreshToken({ id: user.id, role: user.role });
+
+    await pool.query(
+        `UPDATE refresh_tokens
+         SET token_hash = $1, expires_at = $2, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $3`,
+        [hashToken(refreshToken), getRefreshExpiryDate(), storedTokenId],
+    );
+
+    setRefreshTokenCookie(res, refreshToken);
+
+    return accessToken;
+};
+
+const getUserById = async (id, role) => {
+    const { profileQuery } = getUserQueryByRole(role);
+    const result = await pool.query(profileQuery, [id]);
+    return result.rows[0] || null;
+};
+
+const revokeRefreshToken = async (refreshToken) => {
+    if (!refreshToken) {
+        return;
+    }
+
+    await pool.query('DELETE FROM refresh_tokens WHERE token_hash = $1', [hashToken(refreshToken)]);
+};
 
 export const registerEmployee = async (req, res) => {
     const { email, mobile, password, details } = req.body;
@@ -72,10 +159,10 @@ export const login = async (req, res) => {
         let dbRole;
 
         if (role.toLowerCase() === 'employee') {
-            userResult = await pool.query('SELECT * FROM employees WHERE email = $1', [email]);
+            userResult = await pool.query(getUserQueryByRole('employee').authQuery, [email]);
             dbRole = 'employee';
         } else if (role.toLowerCase() === 'employer') {
-            userResult = await pool.query('SELECT * FROM employers WHERE email = $1', [email]);
+            userResult = await pool.query(getUserQueryByRole('employer').authQuery, [email]);
             dbRole = 'employer';
         } else {
             return res.status(400).json({ message: 'Invalid role selected' });
@@ -92,22 +179,18 @@ export const login = async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        const token = jwt.sign(
-            { id: user.id, role: dbRole, account_status: user.account_status },
-            process.env.JWT_SECRET,
-            { expiresIn: '1h' }
-        );
+        const token = await issueTokensForUser(res, {
+            id: user.id,
+            role: dbRole,
+            account_status: user.account_status,
+        });
 
         res.status(200).json({
             message: 'Login successful',
             token,
             role: dbRole,
             account_status: user.account_status,
-            user: {
-                id: user.id,
-                name: dbRole === 'employee' ? user.full_name : user.organization_name,
-                email: user.email
-            }
+            user: mapLoginUser(user, dbRole),
         });
     } catch (error) {
         console.error(error);
@@ -115,31 +198,86 @@ export const login = async (req, res) => {
     }
 };
 
+export const refreshAccessToken = async (req, res) => {
+    const refreshToken = getCookieValue(req, REFRESH_COOKIE_NAME);
+
+    if (!refreshToken) {
+        return res.status(401).json({ message: 'Refresh token missing' });
+    }
+
+    try {
+        const decoded = verifyRefreshToken(refreshToken);
+        const storedTokenResult = await pool.query(
+            `SELECT id, expires_at
+             FROM refresh_tokens
+             WHERE token_hash = $1 AND user_id = $2 AND role = $3`,
+            [hashToken(refreshToken), decoded.id, decoded.role],
+        );
+
+        if (storedTokenResult.rows.length === 0) {
+            clearRefreshTokenCookie(res);
+            return res.status(401).json({ message: 'Refresh token not recognized' });
+        }
+
+        const storedToken = storedTokenResult.rows[0];
+        if (new Date(storedToken.expires_at) <= new Date()) {
+            await revokeRefreshToken(refreshToken);
+            clearRefreshTokenCookie(res);
+            return res.status(401).json({ message: 'Refresh token expired' });
+        }
+
+        const user = await getUserById(decoded.id, decoded.role);
+        if (!user) {
+            await revokeRefreshToken(refreshToken);
+            clearRefreshTokenCookie(res);
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const accessToken = await rotateRefreshToken(res, storedToken.id, {
+            id: user.id,
+            role: decoded.role,
+            account_status: user.account_status,
+        });
+
+        res.status(200).json({
+            message: 'Token refreshed successfully',
+            token: accessToken,
+            role: decoded.role,
+            account_status: user.account_status,
+            user: mapLoginUser(user, decoded.role),
+        });
+    } catch (error) {
+        await revokeRefreshToken(refreshToken);
+        clearRefreshTokenCookie(res);
+        res.status(401).json({ message: 'Invalid refresh token' });
+    }
+};
+
+export const logout = async (req, res) => {
+    const refreshToken = getCookieValue(req, REFRESH_COOKIE_NAME);
+
+    try {
+        await revokeRefreshToken(refreshToken);
+    } catch (error) {
+        console.error('Logout error:', error);
+    }
+
+    clearRefreshTokenCookie(res);
+    res.status(200).json({ message: 'Logged out successfully' });
+};
+
 export const getMe = async (req, res) => {
     try {
         // req.user is populated by authMiddleware
         const { id, role } = req.user;
 
-        let userResult;
-        if (role === 'employee') {
-            userResult = await pool.query(
-                `SELECT id, email, full_name, mobile, date_of_birth, gender, employment_status, city, state, account_status 
-                 FROM employees WHERE id = $1`,
-                [id]
-            );
-        } else {
-            userResult = await pool.query(
-                `SELECT id, email, organization_name, org_type, industry_sector, authorized_person_name, designation, mobile, city, state, account_status 
-                 FROM employers WHERE id = $1`,
-                [id]
-            );
-        }
+        const user = await getUserById(id, role);
 
-        if (userResult.rows.length === 0) {
+        if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        res.status(200).json({ user: userResult.rows[0], role });
+        res.status(200).json({ user, role });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error fetching user details' });

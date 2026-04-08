@@ -11,10 +11,10 @@ interface StatusBadgeProps {
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
     const styles = {
-        verified: { bg: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', icon: CheckCircle, label: 'Verified' },
-        pending: { bg: 'rgba(234, 179, 8, 0.1)', color: '#eab308', icon: Clock, label: 'Pending' },
-        rejected: { bg: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', icon: XCircle, label: 'Rejected' },
-        unverified: { bg: 'rgba(148, 163, 184, 0.1)', color: '#94a3b8', icon: XCircle, label: 'Unverified' },
+        verified: { bg: '#ecfdf3', color: '#15803d', border: '#bbf7d0', icon: CheckCircle, label: 'Verified' },
+        pending: { bg: '#fffbeb', color: '#b45309', border: '#fcd34d', icon: Clock, label: 'Pending' },
+        rejected: { bg: '#fef2f2', color: '#b91c1c', border: '#fecaca', icon: XCircle, label: 'Rejected' },
+        unverified: { bg: '#f8fafc', color: '#475569', border: '#cbd5e1', icon: XCircle, label: 'Unverified' },
     };
 
     const config = styles[status] || styles.unverified;
@@ -31,7 +31,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
             color: config.color,
             fontSize: '0.875rem',
             fontWeight: 500,
-            border: `1px solid ${config.color}30`
+            border: `1px solid ${config.border}`
         }}>
             <Icon size={14} strokeWidth={2.5} />
             {config.label}

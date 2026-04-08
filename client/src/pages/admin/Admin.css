@@ -94,6 +94,38 @@
     gap: 0.25rem;
 }
 
+.admin-password-wrapper {
+    position: relative;
+}
+
+.admin-password-wrapper .admin-input {
+    padding-right: 2.75rem;
+}
+
+.admin-password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    padding: 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.admin-password-toggle:hover {
+    color: #cbd5e1;
+}
+
+.admin-password-toggle:focus-visible {
+    outline: none;
+    color: #e2e8f0;
+}
+
 .admin-label {
     font-size: 0.75rem;
     font-weight: 600;
@@ -178,69 +210,43 @@
     font-family: 'Inter', system-ui, sans-serif;
 }
 
-/* Dashboard Header */
-.admin-header {
-    background: rgba(15, 23, 42, 0.9);
-    border-bottom: 1px solid #1e293b;
-    color: #ffffff;
-    position: sticky;
-    top: 0;
-    z-index: 40;
-    backdrop-filter: blur(16px);
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-}
-
-.admin-header-container {
-    max-width: 80rem;
-    margin: 0 auto;
-    padding: 0 1.5rem;
-    height: 4rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.admin-header-logo {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.admin-header-icon {
-    padding: 0.5rem;
-    background: rgba(99, 102, 241, 0.2);
-    border-radius: 0.5rem;
-    color: #818cf8;
-}
-
-.admin-header-title {
-    font-weight: 700;
-    font-size: 1.125rem;
-    letter-spacing: 0.025em;
-}
-
-.admin-logout-btn {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #94a3b8;
-    background: none;
-    border: none;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    cursor: pointer;
-    transition: color 0.2s;
-}
-
-.admin-logout-btn:hover {
-    color: #ffffff;
-}
-
 /* Dashboard Main Layout */
 .admin-main {
     max-width: 80rem;
     margin: 0 auto;
-    padding: 2rem 1.5rem;
+    padding: 6.6rem 1.5rem 2rem;
+}
+
+.admin-hero {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-bottom: 1.6rem;
+}
+
+.admin-hero__icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.85rem;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, #dbeafe, #e0f2fe);
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.12);
+}
+
+.admin-hero__title {
+    font-size: 1.55rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+}
+
+.admin-hero__subtitle {
+    margin-top: 0.2rem;
+    color: #64748b;
+    font-size: 0.92rem;
 }
 
 .admin-metrics-grid {

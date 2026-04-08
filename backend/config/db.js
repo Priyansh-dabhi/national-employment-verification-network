@@ -163,6 +163,18 @@ const createTables = async () => {
         );
     `;
 
+    const createRefreshTokensTable = `
+        CREATE TABLE IF NOT EXISTS refresh_tokens (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            role VARCHAR(20) NOT NULL,
+            token_hash VARCHAR(255) UNIQUE NOT NULL,
+            expires_at TIMESTAMP NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    `;
+
     try {
         const client = await pool.connect();
         await client.query(createEmployeesTable);
@@ -177,6 +189,7 @@ const createTables = async () => {
         await client.query(createEmployerDocumentsTable);
         await client.query(createEmployerVerificationRequestsTable);
         await client.query(createCompanyEmployeesTable);
+        await client.query(createRefreshTokensTable);
         console.log('Tables created or already exist');
         client.release();
     } catch (err) {

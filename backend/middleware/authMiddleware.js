@@ -12,7 +12,9 @@ const authMiddleware = (req, res, next) => {
         req.user = decoded; // attach user info (id, role, account_status) to request
         next();
     } catch (error) {
-        res.status(400).json({ message: 'Invalid token.' });
+        res.status(401).json({
+            message: error.name === 'TokenExpiredError' ? 'Access token expired.' : 'Invalid token.',
+        });
     }
 };
 

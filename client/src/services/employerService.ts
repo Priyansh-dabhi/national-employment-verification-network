@@ -1,103 +1,47 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
-const getHeaders = () => ({
-    'Authorization': `Bearer ${localStorage.getItem('nevn_token')}`,
-    'Content-Type': 'application/json',
-});
+import { apiClient } from './apiClient';
 
 export const employerService = {
-    // Profile
-    getProfile: async () => {
-        const res = await fetch(`${API_URL}/employer/profile`, { headers: getHeaders() });
-        if (!res.ok) throw new Error('Failed to fetch employer profile');
-        return res.json();
-    },
+  getProfile: () => apiClient.request<{ profile: Record<string, unknown> }>('/employer/profile'),
 
-    // Company Documents
-    uploadDocument: async (file: File, documentType: string) => {
-        const token = localStorage.getItem('nevn_token');
-        const formData = new FormData();
-        formData.append('document', file);
-        formData.append('document_type', documentType);
-        const res = await fetch(`${API_URL}/employer/documents/upload`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` },
-            body: formData,
-        });
-        if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.message || 'Upload failed');
-        }
-        return res.json();
-    },
+  uploadDocument: async (file: File, documentType: string) => {
+    const formData = new FormData();
+    formData.append('document', file);
+    formData.append('document_type', documentType);
 
-    getDocuments: async () => {
-        const res = await fetch(`${API_URL}/employer/documents`, { headers: getHeaders() });
-        if (!res.ok) throw new Error('Failed to fetch documents');
-        return res.json();
-    },
+    return apiClient.request<{ message: string; document: Record<string, unknown> }>('/employer/documents/upload', {
+      method: 'POST',
+      body: formData,
+    });
+  },
 
-    // Verification
-    applyForVerification: async () => {
-        const res = await fetch(`${API_URL}/employer/verification/apply`, {
-            method: 'POST',
-            headers: getHeaders(),
-        });
-        if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.message || 'Failed to apply for verification');
-        }
-        return res.json();
-    },
+  getDocuments: () => apiClient.request<{ documents: Record<string, unknown>[] }>('/employer/documents'),
 
-    getVerificationStatus: async () => {
-        const res = await fetch(`${API_URL}/employer/verification/status`, { headers: getHeaders() });
-        if (!res.ok) throw new Error('Failed to fetch verification status');
-        return res.json();
-    },
+  applyForVerification: () =>
+    apiClient.request<{ message: string; request: Record<string, unknown> }>('/employer/verification/apply', {
+      method: 'POST',
+    }),
 
-    // Employee Verification Requests
-    requestEmployeeVerification: async (employee_email: string, position: string, reason: string) => {
-        const res = await fetch(`${API_URL}/employer/request-verification`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ employee_email, position, reason }),
-        });
-        if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.message || 'Failed to request verification');
-        }
-        return res.json();
-    },
+  getVerificationStatus: () =>
+    apiClient.request<{ account_status: string; latest_request: Record<string, unknown> | null }>(
+      '/employer/verification/status',
+    ),
 
-    getVerificationRequests: async () => {
-        const res = await fetch(`${API_URL}/employer/verification-requests`, { headers: getHeaders() });
-        if (!res.ok) throw new Error('Failed to fetch verification requests');
-        return res.json();
-    },
+  requestEmployeeVerification: (employee_email: string, position: string, reason: string) =>
+    apiClient.request<{ message: string; employee: Record<string, unknown> }>('/employer/request-verification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ employee_email, position, reason }),
+    }),
 
-    // Employees
-    getVerifiedEmployees: async () => {
-        const res = await fetch(`${API_URL}/employer/verified-employees`, { headers: getHeaders() });
-        if (!res.ok) throw new Error('Failed to fetch verified employees');
-        return res.json();
-    },
+  getVerificationRequests: () =>
+    apiClient.request<{ requests: Record<string, unknown>[] }>('/employer/verification-requests'),
 
-    getCompanyEmployees: async () => {
-        const res = await fetch(`${API_URL}/employer/employees`, { headers: getHeaders() });
-        if (!res.ok) throw new Error('Failed to fetch employees');
-        return res.json();
-    },
+  getVerifiedEmployees: () => apiClient.request<{ employees: Record<string, unknown>[] }>('/employer/verified-employees'),
 
-    markEmployeeLeft: async (employeeId: number) => {
-        const res = await fetch(`${API_URL}/employer/employees/${employeeId}/leave`, {
-            method: 'POST',
-            headers: getHeaders(),
-        });
-        if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.message || 'Failed to update status');
-        }
-        return res.json();
-    },
+  getCompanyEmployees: () => apiClient.request<{ employees: Record<string, unknown>[] }>('/employer/employees'),
+
+  markEmployeeLeft: (employeeId: number) =>
+    apiClient.request<{ message: string; record: Record<string, unknown> }>(`/employer/employees/${employeeId}/leave`, {
+      method: 'POST',
+    }),
 };

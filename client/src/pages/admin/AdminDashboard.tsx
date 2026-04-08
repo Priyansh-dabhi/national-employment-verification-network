@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
 import { DocumentReviewModal } from './DocumentReviewModal';
-import { ShieldAlert, LogOut, CheckCircle, AlertCircle, XCircle, Loader2 } from 'lucide-react';
+import { ShieldAlert, CheckCircle, AlertCircle, XCircle, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './Admin.css';
 
@@ -36,11 +36,6 @@ export const AdminDashboard = () => {
         fetchData();
     }, []);
 
-    const handleLogout = () => {
-        adminService.logout();
-        navigate('/admin-login');
-    };
-
     const getStatusChip = (status: string) => {
         switch(status) {
             case 'VERIFIED':
@@ -58,22 +53,17 @@ export const AdminDashboard = () => {
 
     return (
         <div className="admin-dash-bg">
-            {/* Header */}
-            <header className="admin-header">
-                <div className="admin-header-container">
-                    <div className="admin-header-logo">
-                        <div className="admin-header-icon">
-                            <ShieldAlert size={20} />
-                        </div>
-                        <h1 className="admin-header-title">NEVN Central Authority</h1>
-                    </div>
-                    <button onClick={handleLogout} className="admin-logout-btn">
-                        <LogOut size={16} /> Logout
-                    </button>
-                </div>
-            </header>
-
             <main className="admin-main">
+                <section className="admin-hero">
+                    <div className="admin-hero__icon">
+                        <ShieldAlert size={20} />
+                    </div>
+                    <div>
+                        <h1 className="admin-hero__title">NEVN Central Authority</h1>
+                        <p className="admin-hero__subtitle">Review employee and employer verification queues from the central admin portal.</p>
+                    </div>
+                </section>
+
                 {/* Metrics */}
                 <div className="admin-metrics-grid">
                     <div className="admin-metric-card">

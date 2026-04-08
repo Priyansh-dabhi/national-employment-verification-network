@@ -6,7 +6,8 @@
   "types": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon server.js"
+    "start": "nodemon server.js",
+    "seed:admin": "node scripts/create_admin.js"
   },
   "keywords": [],
   "author": "",

@@ -1,344 +1,382 @@
-
-import { useState } from 'react';
-import { Card } from '../../components/ui/Card';
-import { Input } from '../../components/ui/Input';
-import { Button } from '../../components/ui/Button';
+import { type FormEvent, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Building, ArrowRight, ArrowLeft } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Building2, CheckCircle2, ClipboardCheck, UserRound } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { PasswordInput } from '../../components/ui/PasswordInput';
 import { authService } from '../../services/authService';
-import type { RegistrationData, UserRole, EmploymentStatus, OrganizationType } from '../../types';
+import type { EmploymentStatus, OrganizationType, RegistrationData } from '../../types';
 
-// Step Components defined outside to prevent re-renders losing focus
-
-const StepOne = ({ role, setRole }: { role: UserRole, setRole: (r: UserRole) => void }) => (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-        <div
-            onClick={() => setRole('employee')}
-            style={{
-                cursor: 'pointer',
-                padding: '2rem',
-                borderRadius: 'var(--radius-lg)',
-                border: `2px solid ${role === 'employee' ? 'var(--color-highlight)' : 'var(--glass-border)'}`,
-                background: role === 'employee' ? 'rgba(251, 191, 36, 0.1)' : 'var(--glass-bg)',
-                textAlign: 'center',
-                transition: 'all 0.2s'
-            }}
-        >
-            <div style={{ marginBottom: '1rem', display: 'inline-block', padding: '1rem', background: 'rgba(255,255,255,0.1)', borderRadius: '50%' }}>
-                <User size={32} color={role === 'employee' ? 'var(--color-highlight)' : 'var(--color-text-muted)'} />
-            </div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Employee</h3>
-            <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>Verify your employment history.</p>
-        </div>
-
-        <div
-            onClick={() => setRole('employer')}
-            style={{
-                cursor: 'pointer',
-                padding: '2rem',
-                borderRadius: 'var(--radius-lg)',
-                border: `2px solid ${role === 'employer' ? 'var(--color-highlight)' : 'var(--glass-border)'}`,
-                background: role === 'employer' ? 'rgba(251, 191, 36, 0.1)' : 'var(--glass-bg)',
-                textAlign: 'center',
-                transition: 'all 0.2s'
-            }}
-        >
-            <div style={{ marginBottom: '1rem', display: 'inline-block', padding: '1rem', background: 'rgba(255,255,255,0.1)', borderRadius: '50%' }}>
-                <Building size={32} color={role === 'employer' ? 'var(--color-highlight)' : 'var(--color-text-muted)'} />
-            </div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Employer</h3>
-            <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>Verify and manage employees.</p>
-        </div>
-    </div>
-);
-
-const PasswordStrength = ({ password }: { password: string }) => {
-    if (!password) return null;
-
-    const hasLower = /[a-z]/.test(password);
-    const hasUpper = /[A-Z]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
-    const hasSpecial = /[^A-Za-z0-9]/.test(password);
-    const isLongEnough = password.length >= 8;
-
-    const strength = [hasLower, hasUpper, hasNumber, hasSpecial, isLongEnough].filter(Boolean).length;
-
-    let color = 'var(--color-error)';
-    let text = 'Weak';
-
-    if (strength >= 4) {
-        color = 'var(--color-success)';
-        text = 'Strong';
-    } else if (strength >= 2) {
-        color = 'var(--color-warning)';
-        text = 'Medium';
-    }
-
-    return (
-        <div style={{ fontSize: '0.8rem', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ flex: 1, height: '4px', background: 'var(--glass-border)', borderRadius: '2px', overflow: 'hidden' }}>
-                <div style={{ width: `${(strength / 5) * 100}%`, height: '100%', background: color, transition: 'width 0.3s' }} />
-            </div>
-            <span style={{ color }}>{text}</span>
-        </div>
-    );
-};
-
-const StepTwo = ({ commonData, handleCommonChange }: { commonData: any, handleCommonChange: any }) => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <Input label="Email Address" name="email" value={commonData.email} onChange={handleCommonChange} type="email" placeholder="Enter Email Address" />
-        <Input label="Mobile Number" name="mobile" value={commonData.mobile} onChange={handleCommonChange} placeholder="Enter Mobile Number" />
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div>
-                <Input label="Password" name="password" value={commonData.password} onChange={handleCommonChange} type="password" placeholder="Enter Password" />
-                <PasswordStrength password={commonData.password} />
-            </div>
-            <Input label="Confirm Password" name="confirmPassword" value={commonData.confirmPassword} onChange={handleCommonChange} type="password" placeholder="Enter Confirm Password" />
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <Input label="City" name="city" value={commonData.city} onChange={handleCommonChange} placeholder="Enter the City" />
-            <Input label="State" name="state" value={commonData.state} onChange={handleCommonChange} placeholder="Enter the State" />
-        </div>
-    </div>
-);
-
-const StepThree = ({
-    role,
-    employeeData,
-    handleEmployeeChange,
-    employerData,
-    handleEmployerChange,
-    termsAccepted,
-    setTermsAccepted
-}: {
-    role: UserRole,
-    employeeData: any,
-    handleEmployeeChange: any,
-    employerData: any,
-    handleEmployerChange: any,
-    termsAccepted: boolean,
-    setTermsAccepted: (v: boolean) => void
-}) => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {role === 'employee' ? (
-            <>
-                <Input label="Full Name" name="fullName" value={employeeData.fullName} onChange={handleEmployeeChange} placeholder="John Doe" />
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <Input label="Date of Birth" name="dob" value={employeeData.dob} onChange={handleEmployeeChange} type="date" />
-                    <div className="input-group">
-                        <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 500, marginBottom: '0.5rem', color: 'var(--color-text-muted)' }}>Employment Status</label>
-                        <select
-                            name="employmentStatus"
-                            value={employeeData.employmentStatus}
-                            onChange={handleEmployeeChange}
-                            style={{
-                                width: '100%',
-                                padding: '0.75rem',
-                                background: 'rgba(255, 255, 255, 0.05)',
-                                border: '1px solid var(--glass-border)',
-                                borderRadius: 'var(--radius-md)',
-                                color: 'var(--color-text-main)',
-                                outline: 'none'
-                            }}
-                        >
-                            <option style={{ background: 'var(--color-bg-dark)', color: 'var(--color-text-main)' }} value="employed">Employed</option>
-                            <option style={{ background: 'var(--color-bg-dark)', color: 'var(--color-text-main)' }} value="unemployed">Unemployed</option>
-                            <option style={{ background: 'var(--color-bg-dark)', color: 'var(--color-text-main)' }} value="student">Student</option>
-                            <option style={{ background: 'var(--color-bg-dark)', color: 'var(--color-text-main)' }} value="retired">Retired</option>
-                        </select>
-                    </div>
-                </div>
-                <div className="input-group">
-                    <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 500, marginBottom: '0.5rem', color: 'var(--color-text-muted)' }}>Gender (Optional)</label>
-                    <div style={{ display: 'flex', gap: '1rem' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                            <input type="radio" name="gender" value="male" onChange={handleEmployeeChange} className="custom-radio" /> Male
-                        </label>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                            <input type="radio" name="gender" value="female" onChange={handleEmployeeChange} className="custom-radio" /> Female
-                        </label>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                            <input type="radio" name="gender" value="other" onChange={handleEmployeeChange} className="custom-radio" /> Other
-                        </label>
-                    </div>
-                </div>
-            </>
-        ) : (
-            <>
-                <Input label="Organization Name" name="organizationName" value={employerData.organizationName} onChange={handleEmployerChange} placeholder="Tech Industries Ltd" />
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <div className="input-group">
-                        <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 500, marginBottom: '0.5rem', color: 'var(--color-text-muted)' }}>Org Type</label>
-                        <select
-                            name="organizationType"
-                            value={employerData.organizationType}
-                            onChange={handleEmployerChange}
-                            style={{
-                                width: '100%',
-                                padding: '0.75rem',
-                                background: 'rgba(255, 255, 255, 0.05)',
-                                border: '1px solid var(--glass-border)',
-                                borderRadius: 'var(--radius-md)',
-                                color: 'var(--color-text-light)',
-                                outline: 'none'
-                            }}
-                        >
-                            <option style={{ background: 'var(--color-bg-dark)' }} value="private">Private</option>
-                            <option style={{ background: 'var(--color-bg-dark)' }} value="government">Government</option>
-                            <option style={{ background: 'var(--color-bg-dark)' }} value="psu">PSU</option>
-                        </select>
-                    </div>
-                    <Input label="Industry Sector" name="industrySector" value={employerData.industrySector} onChange={handleEmployerChange} placeholder="IT / Manufacturing" />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <Input label="Authorized Representative Full Name" name="authorizedPersonName" value={employerData.authorizedPersonName} onChange={handleEmployerChange} placeholder="Jane Smith" />
-                    <Input label="Designation" name="authorizedPersonDesignation" value={employerData.authorizedPersonDesignation} onChange={handleEmployerChange} placeholder="HR Manager" />
-                </div>
-            </>
-        )}
-
-        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', cursor: 'pointer', marginTop: '1rem' }}>
-            <input
-                type="checkbox"
-                checked={termsAccepted}
-                onChange={(e) => setTermsAccepted(e.target.checked)}
-                style={{ marginTop: '0.2rem', accentColor: 'var(--color-highlight)' }}
-            />
-            <span style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
-                I agree to the <span style={{ color: 'var(--color-highlight)' }}>Terms of Service</span> and <span style={{ color: 'var(--color-highlight)' }}>Privacy Policy</span>.
-            </span>
-        </label>
-    </div>
-);
+type Role = 'employee' | 'employer';
 
 export const Register = () => {
-    const navigate = useNavigate();
-    const [step, setStep] = useState(1);
-    const [role, setRole] = useState<UserRole>('employee');
-    const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const [role, setRole] = useState<Role>('employee');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
-    // Form States
-    const [commonData, setCommonData] = useState({
-        email: '', mobile: '', password: '', confirmPassword: '', city: '', state: ''
-    });
+  const [common, setCommon] = useState({
+    email: '',
+    mobile: '',
+    password: '',
+    confirmPassword: '',
+    city: '',
+    state: '',
+  });
 
-    const [employeeData, setEmployeeData] = useState({
-        fullName: '', dob: '', gender: '', employmentStatus: 'employed' as EmploymentStatus
-    });
+  const [employee, setEmployee] = useState({
+    fullName: '',
+    dob: '',
+    gender: '',
+    employmentStatus: 'employed' as EmploymentStatus,
+  });
 
-    const [employerData, setEmployerData] = useState({
-        organizationName: '', organizationType: 'private' as OrganizationType,
-        industrySector: '', authorizedPersonName: '', authorizedPersonDesignation: ''
-    });
+  const [employer, setEmployer] = useState({
+    organizationName: '',
+    organizationType: 'private' as OrganizationType,
+    industrySector: '',
+    authorizedPersonName: '',
+    authorizedPersonDesignation: '',
+  });
 
-    const [termsAccepted, setTermsAccepted] = useState(false);
+  const passwordMismatch = useMemo(
+    () => common.confirmPassword.length > 0 && common.password !== common.confirmPassword,
+    [common.confirmPassword, common.password],
+  );
 
-    const handleCommonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setCommonData({ ...commonData, [e.target.name]: e.target.value });
+  const validate = () => {
+    if (passwordMismatch) return 'Password and confirm password must match.';
+    if (!termsAccepted) return 'Please accept terms and privacy policy to continue.';
+    if (role === 'employee' && (!employee.fullName || !employee.dob)) {
+      return 'Please complete employee profile details.';
+    }
+    if (
+      role === 'employer' &&
+      (!employer.organizationName ||
+        !employer.industrySector ||
+        !employer.authorizedPersonName ||
+        !employer.authorizedPersonDesignation)
+    ) {
+      return 'Please complete organization details.';
+    }
+    return null;
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError(null);
+
+    const validationError = validate();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    const payload: RegistrationData = {
+      email: common.email.trim(),
+      mobile: common.mobile.trim(),
+      password: common.password,
+      role,
+      details:
+        role === 'employee'
+          ? {
+              fullName: employee.fullName.trim(),
+              dob: employee.dob,
+              gender: employee.gender.trim() || undefined,
+              employmentStatus: employee.employmentStatus,
+              city: common.city.trim(),
+              state: common.state.trim(),
+            }
+          : {
+              organizationName: employer.organizationName.trim(),
+              organizationType: employer.organizationType,
+              industrySector: employer.industrySector.trim(),
+              authorizedPersonName: employer.authorizedPersonName.trim(),
+              authorizedPersonDesignation: employer.authorizedPersonDesignation.trim(),
+              city: common.city.trim(),
+              state: common.state.trim(),
+            },
     };
 
-    const handleEmployeeChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        setEmployeeData({ ...employeeData, [e.target.name]: e.target.value });
-    };
+    setLoading(true);
+    try {
+      await authService.register(payload);
+      navigate('/registration-success');
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const handleEmployerChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        setEmployerData({ ...employerData, [e.target.name]: e.target.value });
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!termsAccepted) return;
-
-        setLoading(true);
-
-        const registrationPayload: RegistrationData = {
-            email: commonData.email,
-            mobile: commonData.mobile,
-            password: commonData.password,
-            role,
-            details: role === 'employee'
-                ? { ...employeeData, city: commonData.city, state: commonData.state }
-                : { ...employerData, city: commonData.city, state: commonData.state }
-        };
-
-        try {
-            await authService.register(registrationPayload);
-            // Redirect to Success Page
-            navigate('/registration-success');
-        } catch (error) {
-            console.error("Registration failed", error);
-            alert("Registration failed. Please try again.");
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-            <div style={{ width: '100%', maxWidth: '600px' }}>
-                <Card>
-                    <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
-                        <h2 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>Create Account</h2>
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
-                            {[1, 2, 3].map(i => (
-                                <div key={i} style={{
-                                    width: '3rem', height: '4px', borderRadius: '2px',
-                                    background: i <= step ? 'var(--color-highlight)' : 'rgba(255,255,255,0.1)'
-                                }} />
-                            ))}
-                        </div>
-                    </div>
-
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={step}
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
-                            transition={{ duration: 0.2 }}
-                        >
-                            {step === 1 && <StepOne role={role} setRole={setRole} />}
-                            {step === 2 && <StepTwo commonData={commonData} handleCommonChange={handleCommonChange} />}
-                            {step === 3 && <StepThree
-                                role={role}
-                                employeeData={employeeData}
-                                handleEmployeeChange={handleEmployeeChange}
-                                employerData={employerData}
-                                handleEmployerChange={handleEmployerChange}
-                                termsAccepted={termsAccepted}
-                                setTermsAccepted={setTermsAccepted}
-                            />}
-                        </motion.div>
-                    </AnimatePresence>
-
-                    <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'space-between' }}>
-                        <Button
-                            variant="ghost"
-                            disabled={step === 1}
-                            onClick={() => setStep(step - 1)}
-                            style={{ opacity: step === 1 ? 0 : 1, color: 'var(--color-highlight)', padding: '0.5rem' }}
-                        >
-                            <ArrowLeft size={18} style={{ padding: '0.5rem' }} /> Back
-                        </Button>
-
-                        <Button
-                            variant="primary"
-                            onClick={(e: React.MouseEvent) => {
-                                if (step < 3) setStep(step + 1);
-                                else handleSubmit(e as any);
-                            }}
-                            disabled={loading || (step === 3 && !termsAccepted)}
-                        >
-                            {loading ? 'Creating...' : step === 3 ? 'Register' : 'Next'}
-                            {!loading && step < 3 && <ArrowRight size={18} style={{ marginLeft: '0.5rem' }} />}
-                        </Button>
-                    </div>
-
-                    <p style={{ textAlign: 'center', color: 'var(--color-text-muted)', marginTop: '1.5rem' }}>
-                        Already have an account? <Link to="/login" style={{ color: 'var(--color-highlight)' }}>Sign In</Link>
-                    </p>
-                </Card>
+  return (
+    <div className="auth-shell">
+      <div className="auth-grid">
+        <aside className="auth-brand">
+          <div>
+            <span className="auth-brand__badge">
+              <ClipboardCheck size={14} />
+              NEVN ONBOARDING
+            </span>
+            <h1 className="auth-brand__title">Create your verified account</h1>
+            <p className="auth-brand__desc">
+              Register once and use secure identity and employment verification workflows across the platform.
+            </p>
+          </div>
+          <div className="auth-brand__meta">
+            <div className="auth-brand__meta-item">
+              <CheckCircle2 size={15} />
+              Step-by-step onboarding with inline validation
             </div>
-        </div>
-    );
+            <div className="auth-brand__meta-item">
+              <CheckCircle2 size={15} />
+              Compatible with employee and employer verification paths
+            </div>
+          </div>
+        </aside>
+
+        <section className="auth-card">
+          <h2 className="auth-title">Register</h2>
+          <p className="auth-subtitle">Complete all sections to create your NEVN account.</p>
+
+          <div className="role-selector" role="tablist" aria-label="Select account role">
+            <button
+              type="button"
+              className={`role-chip ${role === 'employee' ? 'active' : ''}`}
+              onClick={() => setRole('employee')}
+            >
+              <UserRound size={14} />
+              Employee
+            </button>
+            <button
+              type="button"
+              className={`role-chip ${role === 'employer' ? 'active' : ''}`}
+              onClick={() => setRole('employer')}
+            >
+              <Building2 size={14} />
+              Employer
+            </button>
+          </div>
+
+          <form className="auth-sections" onSubmit={handleSubmit} autoComplete="off">
+            <input type="text" name="fake_username" autoComplete="username" style={{ display: 'none' }} />
+            <input type="password" name="fake_password" autoComplete="new-password" style={{ display: 'none' }} />
+
+            <section className="auth-section">
+              <h3 className="auth-section__title">1. Basic Credentials</h3>
+              <p className="auth-section__desc">Use your active email and set a secure password.</p>
+              <div className="grid-2">
+                <Input
+                  label="Email Address"
+                  name="register_email"
+                  type="email"
+                  autoComplete="email"
+                  value={common.email}
+                  onChange={(event) => setCommon({ ...common, email: event.target.value })}
+                  required
+                />
+                <Input
+                  label="Mobile Number"
+                  name="register_mobile"
+                  autoComplete="off"
+                  value={common.mobile}
+                  onChange={(event) => setCommon({ ...common, mobile: event.target.value })}
+                  required
+                />
+              </div>
+              <div className="grid-2" style={{ marginTop: '0.8rem' }}>
+                <PasswordInput
+                  label="Password"
+                  name="register_password"
+                  autoComplete="new-password"
+                  value={common.password}
+                  onChange={(event) => setCommon({ ...common, password: event.target.value })}
+                  hint="Use at least 8 characters."
+                  required
+                />
+                <PasswordInput
+                  label="Confirm Password"
+                  name="register_confirm_password"
+                  autoComplete="new-password"
+                  value={common.confirmPassword}
+                  onChange={(event) => setCommon({ ...common, confirmPassword: event.target.value })}
+                  error={passwordMismatch ? 'Passwords do not match.' : undefined}
+                  required
+                />
+              </div>
+            </section>
+
+            <section className="auth-section">
+              <h3 className="auth-section__title">2. Contact Details</h3>
+              <p className="auth-section__desc">Provide your city and state for profile verification context.</p>
+              <div className="grid-2">
+                <Input
+                  label="City"
+                  name="register_city"
+                  autoComplete="address-level2"
+                  value={common.city}
+                  onChange={(event) => setCommon({ ...common, city: event.target.value })}
+                  required
+                />
+                <Input
+                  label="State"
+                  name="register_state"
+                  autoComplete="address-level1"
+                  value={common.state}
+                  onChange={(event) => setCommon({ ...common, state: event.target.value })}
+                  required
+                />
+              </div>
+            </section>
+
+            <section className="auth-section">
+              <h3 className="auth-section__title">3. {role === 'employee' ? 'Employee Profile' : 'Organization Details'}</h3>
+              <p className="auth-section__desc">
+                {role === 'employee'
+                  ? 'Provide your personal employment information.'
+                  : 'Provide your organization and authorized representative information.'}
+              </p>
+
+              {role === 'employee' ? (
+                <div className="stack" style={{ gap: '0.8rem' }}>
+                  <Input
+                    label="Full Name"
+                    name="employee_full_name"
+                    autoComplete="name"
+                    value={employee.fullName}
+                    onChange={(event) => setEmployee({ ...employee, fullName: event.target.value })}
+                    required
+                  />
+                  <div className="grid-2">
+                    <Input
+                      label="Date of Birth"
+                      name="employee_dob"
+                      type="date"
+                      autoComplete="bday"
+                      value={employee.dob}
+                      onChange={(event) => setEmployee({ ...employee, dob: event.target.value })}
+                      required
+                    />
+                    <div className="ui-field">
+                      <label htmlFor="employment_status" className="field-label">
+                        Employment Status
+                      </label>
+                      <select
+                        id="employment_status"
+                        className="ui-select"
+                        value={employee.employmentStatus}
+                        onChange={(event) =>
+                          setEmployee({ ...employee, employmentStatus: event.target.value as EmploymentStatus })
+                        }
+                      >
+                        <option value="employed">Employed</option>
+                        <option value="unemployed">Unemployed</option>
+                        <option value="student">Student</option>
+                        <option value="retired">Retired</option>
+                      </select>
+                    </div>
+                  </div>
+                  <Input
+                    label="Gender (Optional)"
+                    name="employee_gender"
+                    autoComplete="sex"
+                    value={employee.gender}
+                    onChange={(event) => setEmployee({ ...employee, gender: event.target.value })}
+                  />
+                </div>
+              ) : (
+                <div className="stack" style={{ gap: '0.8rem' }}>
+                  <Input
+                    label="Organization Name"
+                    name="employer_org_name"
+                    autoComplete="organization"
+                    value={employer.organizationName}
+                    onChange={(event) => setEmployer({ ...employer, organizationName: event.target.value })}
+                    required
+                  />
+                  <div className="grid-2">
+                    <div className="ui-field">
+                      <label htmlFor="organization_type" className="field-label">
+                        Organization Type
+                      </label>
+                      <select
+                        id="organization_type"
+                        className="ui-select"
+                        value={employer.organizationType}
+                        onChange={(event) =>
+                          setEmployer({ ...employer, organizationType: event.target.value as OrganizationType })
+                        }
+                      >
+                        <option value="private">Private</option>
+                        <option value="government">Government</option>
+                        <option value="psu">PSU</option>
+                      </select>
+                    </div>
+                    <Input
+                      label="Industry Sector"
+                      name="employer_industry"
+                      autoComplete="off"
+                      value={employer.industrySector}
+                      onChange={(event) => setEmployer({ ...employer, industrySector: event.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="grid-2">
+                    <Input
+                      label="Authorized Person Name"
+                      name="employer_auth_name"
+                      autoComplete="name"
+                      value={employer.authorizedPersonName}
+                      onChange={(event) => setEmployer({ ...employer, authorizedPersonName: event.target.value })}
+                      required
+                    />
+                    <Input
+                      label="Designation"
+                      name="employer_designation"
+                      autoComplete="organization-title"
+                      value={employer.authorizedPersonDesignation}
+                      onChange={(event) =>
+                        setEmployer({ ...employer, authorizedPersonDesignation: event.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+            </section>
+
+            <section className="auth-section">
+              <h3 className="auth-section__title">4. Consent</h3>
+              <p className="auth-section__desc">Confirm agreement with NEVN terms and privacy policy.</p>
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(event) => setTermsAccepted(event.target.checked)}
+                  style={{ marginTop: '0.18rem', accentColor: 'var(--color-primary)' }}
+                />
+                <span style={{ color: 'var(--color-text-muted)', fontSize: '0.86rem' }}>
+                  I agree to the Terms of Service and Privacy Policy.
+                </span>
+              </label>
+            </section>
+
+            {error ? <div className="ui-alert ui-alert--error">{error}</div> : null}
+
+            <Button type="submit" size="lg" fullWidth isLoading={loading}>
+              Create Account
+            </Button>
+          </form>
+
+          <p style={{ marginTop: '0.95rem', color: 'var(--color-text-soft)', fontSize: '0.88rem', textAlign: 'center' }}>
+            Already registered?{' '}
+            <Link to="/login" style={{ color: 'var(--color-primary)', fontWeight: 600 }}>
+              Sign in
+            </Link>
+          </p>
+        </section>
+      </div>
+    </div>
+  );
 };

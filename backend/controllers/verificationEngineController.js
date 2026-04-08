@@ -113,6 +113,74 @@ export const uploadAndVerifyDocument = async (req, res) => {
     }
 };
 
+export const applyForEmployeeVerification = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const employeeResult = await pool.query(
+            'SELECT id, account_status FROM employees WHERE id = $1',
+            [userId]
+        );
+
+        if (employeeResult.rows.length === 0) {
+            return res.status(404).json({ message: 'Employee account not found.' });
+        }
+
+        const employee = employeeResult.rows[0];
+
+        if (employee.account_status === 'VERIFIED') {
+            return res.status(400).json({ message: 'Your account is already verified.' });
+        }
+
+        const docsResult = await pool.query(
+            'SELECT id FROM documents WHERE employee_id = $1 LIMIT 1',
+            [userId]
+        );
+
+        if (docsResult.rows.length === 0) {
+            return res.status(400).json({ message: 'Please upload at least one document before applying.' });
+        }
+
+        const latestLogResult = await pool.query(
+            `SELECT status
+             FROM verification_logs
+             WHERE user_id = $1
+             ORDER BY created_at DESC
+             LIMIT 1`,
+            [userId]
+        );
+
+        if (latestLogResult.rows[0]?.status === 'UNDER REVIEW') {
+            return res.status(400).json({ message: 'A verification request is already under review.' });
+        }
+
+        await pool.query(
+            `INSERT INTO verification_logs (user_id, document_type, score, status, details_json)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [
+                userId,
+                'MANUAL_SUBMISSION',
+                0,
+                'UNDER REVIEW',
+                JSON.stringify({ source: 'employee_apply', submitted_at: new Date().toISOString() }),
+            ]
+        );
+
+        await pool.query(
+            "UPDATE employees SET account_status = 'PENDING' WHERE id = $1",
+            [userId]
+        );
+
+        return res.status(201).json({
+            message: 'Verification request submitted successfully.',
+            account_status: 'PENDING',
+        });
+    } catch (error) {
+        console.error('applyForEmployeeVerification error:', error);
+        return res.status(500).json({ message: 'Failed to submit verification request.' });
+    }
+};
+
 export const getVerificationStatus = async (req, res) => {
     try {
         const { userId } = req.params;

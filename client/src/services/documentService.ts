@@ -1,60 +1,54 @@
 import type { Document, VerificationStatus } from '../types';
+import { apiClient } from './apiClient';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+interface BackendDocument {
+  id: number;
+  document_type: string;
+  uploaded_at: string;
+  verification_status: string;
+  employee_id?: number;
+}
+
+interface UploadMetadata {
+  docType: string;
+  docId?: string;
+}
 
 export const documentService = {
-    getDocuments: async (userId: string): Promise<Document[]> => {
-        const token = localStorage.getItem('nevn_token');
-        const response = await fetch(`${API_URL}/documents`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
+  getDocuments: async (userId: string): Promise<Document[]> => {
+    const data = await apiClient.request<{ documents?: BackendDocument[] }>('/documents');
 
-        if (!response.ok) {
-            throw new Error('Failed to fetch documents');
-        }
+    return (data.documents || []).map((doc) => ({
+      id: String(doc.id),
+      name: doc.document_type,
+      type: doc.document_type,
+      date: doc.uploaded_at,
+      status: doc.verification_status.toLowerCase() as VerificationStatus,
+      user_id: String(doc.employee_id || userId),
+    }));
+  },
 
-        const data = await response.json();
-        // Map backend format to frontend Document type
-        return data.documents.map((doc: any): Document => ({
-            id: doc.id.toString(),
-            name: doc.document_type,
-            type: doc.document_type,
-            date: doc.uploaded_at,
-            status: doc.verification_status.toLowerCase() as VerificationStatus,
-            user_id: doc.employee_id?.toString() || userId
-        }));
-    },
+  uploadDocument: async (file: File, metadata: UploadMetadata): Promise<Document> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('document_type', metadata.docType);
 
-    uploadDocument: async (file: File, metadata: any): Promise<Document> => {
-        const token = localStorage.getItem('nevn_token');
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('document_type', metadata.docType);
-
-        const response = await fetch(`${API_URL}/documents/upload`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            body: formData
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Failed to upload document');
-        }
-
-        const data = await response.json();
-
-        return {
-            id: data.documentId.toString(),
-            name: metadata.docType,
-            type: metadata.docType,
-            date: new Date().toISOString(), // Fallback or could fetch exact from backend later
-            status: data.status.toLowerCase() as VerificationStatus,
-            user_id: 'current' // Backend inherently assigns it to the current user
-        };
+    if (metadata.docId) {
+      formData.append('document_id', metadata.docId);
     }
+
+    const data = await apiClient.request<{ documentId?: string | number; status?: string }>('/documents/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    return {
+      id: String(data.documentId),
+      name: metadata.docType,
+      type: metadata.docType,
+      date: new Date().toISOString(),
+      status: (data.status || 'PENDING').toLowerCase() as VerificationStatus,
+      user_id: 'current',
+    };
+  },
 };

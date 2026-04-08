@@ -10,7 +10,8 @@ export const adminLogin = async (req, res) => {
     }
 
     try {
-        const userResult = await pool.query('SELECT * FROM admins WHERE email = $1', [email]);
+        const normalizedEmail = String(email).trim().toLowerCase();
+        const userResult = await pool.query('SELECT * FROM admins WHERE LOWER(email) = $1', [normalizedEmail]);
 
         if (userResult.rows.length === 0) {
             return res.status(404).json({ message: 'Admin not found' });
