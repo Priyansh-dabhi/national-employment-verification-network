@@ -7,7 +7,7 @@ networks:
 services:
   employment.cc:
     build:
-      context: ../../chaincode/employment
+      context: ../../chaincode/nevs
       dockerfile: Dockerfile
     container_name: employment.cc
     environment:

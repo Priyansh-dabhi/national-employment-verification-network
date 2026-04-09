@@ -360,3 +360,47 @@ func (s *EmploymentLifecycleContract) saveEmploymentState(ctx contractapi.Transa
 	}
 	return ctx.GetStub().PutState(secKey, employmentJSON)
 }
+
+// SetPrivateEmploymentData sets the salary and compensation of an employee in a Private Data Collection
+func (s *EmploymentLifecycleContract) SetPrivateEmploymentData(ctx contractapi.TransactionContextInterface) error {
+	transientMap, err := ctx.GetStub().GetTransient()
+	if err != nil {
+		return fmt.Errorf("error getting transient map: %v", err)
+	}
+
+	transientData, ok := transientMap["employmentPrivateData"]
+	if !ok {
+		return fmt.Errorf("employmentPrivateData not found in the transient map")
+	}
+
+	var data models.EmploymentPrivateData
+	err = json.Unmarshal(transientData, &data)
+	if err != nil {
+		return fmt.Errorf("failed to decode JSON transient data: %v", err)
+	}
+
+	if data.EmploymentID == "" {
+		return fmt.Errorf("employmentId field must be a non-empty string")
+	}
+
+	return ctx.GetStub().PutPrivateData(utils.PrivateDataCollection, data.EmploymentID, transientData)
+}
+
+// GetPrivateEmploymentData returns the private data from the PDC
+func (s *EmploymentLifecycleContract) GetPrivateEmploymentData(ctx contractapi.TransactionContextInterface, employmentID string) (*models.EmploymentPrivateData, error) {
+	privateData, err := ctx.GetStub().GetPrivateData(utils.PrivateDataCollection, employmentID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read from private data collection: %v", err)
+	}
+	if privateData == nil {
+		return nil, fmt.Errorf("private data for employment %s does not exist", employmentID)
+	}
+
+	var data models.EmploymentPrivateData
+	err = json.Unmarshal(privateData, &data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode JSON private data: %v", err)
+	}
+
+	return &data, nil
+}

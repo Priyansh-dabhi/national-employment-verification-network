@@ -25,3 +25,10 @@ type Employment struct {
 	CreatedAt        string `json:"createdAt"`
 	UpdatedAt        string `json:"updatedAt"`
 }
+
+type EmploymentPrivateData struct {
+	EmploymentID string `json:"employmentId"`
+	Salary       string `json:"salary"`
+	Compensation string `json:"compensation"`
+}
+

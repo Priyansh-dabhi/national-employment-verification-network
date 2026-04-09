@@ -13,7 +13,7 @@ export CORE_PEER_TLS_ROOTCERT_FILE="$PROJECT_ROOT/../network/organizations/peerO
 export FABRIC_CFG_PATH="$PROJECT_ROOT/../network/configtx"
 
 peer lifecycle chaincode package employment_1.0.tar.gz \
-    --path ./chaincode/employment \
+    --path ./chaincode/nevs \
     --lang golang \
     --label employment_1.0
 
