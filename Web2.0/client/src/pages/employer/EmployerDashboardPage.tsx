@@ -197,6 +197,9 @@ export const EmployerDashboardPage = () => {
           <Button variant="outline" size="sm" onClick={() => navigate('/employer/jobs')}>
             Job Postings
           </Button>
+          <Button variant="primary" size="sm" onClick={() => navigate('/employer/candidates')}>
+            Discover Candidates
+          </Button>
         </div>
       </div>
     </EmployerLayout>

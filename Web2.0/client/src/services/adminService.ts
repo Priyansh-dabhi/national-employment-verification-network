@@ -75,5 +75,51 @@ export const adminService = {
         }
 
         return await response.json();
+    },
+
+    // Phase 5: Audit Timeline & Employment Management
+    getAuditTimeline: async (limit = 50, offset = 0, functionName?: string): Promise<any> => {
+        const token = localStorage.getItem('nevn_admin_token');
+        let url = `${API_URL}/audit-timeline?limit=${limit}&offset=${offset}`;
+        if (functionName) url += `&functionName=${functionName}`;
+        const response = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch audit timeline');
+        return await response.json();
+    },
+
+    getEmploymentStats: async (): Promise<any> => {
+        const token = localStorage.getItem('nevn_admin_token');
+        const response = await fetch(`${API_URL}/employment-stats`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch employment stats');
+        return await response.json();
+    },
+
+    getAllEmploymentRecords: async (): Promise<any> => {
+        const token = localStorage.getItem('nevn_admin_token');
+        const response = await fetch(`${API_URL}/employment-records`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch employment records');
+        return await response.json();
+    },
+
+    confirmHire: async (recordId: string): Promise<any> => {
+        const token = localStorage.getItem('nevn_admin_token');
+        const response = await fetch(`${API_URL}/confirm-hire/${recordId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to confirm hire');
+        }
+        return await response.json();
     }
 };

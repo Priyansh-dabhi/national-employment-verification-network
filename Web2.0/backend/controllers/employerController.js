@@ -260,10 +260,21 @@ export const markEmployeeLeft = async (req, res) => {
 // ─── GET /api/employer/available-employees ───────────────────────────
 export const getAvailableEmployees = async (req, res) => {
     try {
+        const { id: employerId } = req.user;
         const result = await pool.query(
-            `SELECT id, full_name, email, city, state, account_status
-             FROM employees
-             WHERE account_status = 'VERIFIED' AND web3_status = 'ACTIVE'`
+            `SELECT e.id, e.full_name, e.email, e.city, e.state, e.account_status, e.employment_status,
+                    CASE WHEN EXISTS (
+                        SELECT 1 FROM employment_records er 
+                        WHERE er.employee_id = e.id AND er.employer_id = $1 AND er.status IN ('PROPOSED','CONSENTED','CONFIRMED')
+                    ) THEN true ELSE false END as already_at_company,
+                    CASE WHEN EXISTS (
+                        SELECT 1 FROM employment_records er 
+                        WHERE er.employee_id = e.id AND er.status = 'CONFIRMED'
+                    ) THEN true ELSE false END as currently_employed
+             FROM employees e
+             WHERE e.account_status = 'VERIFIED'
+             ORDER BY e.full_name ASC`
+            , [employerId]
         );
         res.status(200).json({ employees: result.rows });
     } catch (error) {
@@ -273,55 +284,13 @@ export const getAvailableEmployees = async (req, res) => {
 };
 
 // ─── POST /api/employer/propose-hire ─────────────────────────────────
+// NOTE: This is a legacy endpoint kept for backward compatibility.
+// The new hiring flow uses /api/hiring/propose from hiringController.js
 export const proposeHire = async (req, res) => {
     try {
-        const { id: employerId } = req.user;
-        const { employeeId, position, salary, compensation } = req.body;
-
-        if (!employeeId || !position || !salary) {
-            return res.status(400).json({ message: 'employeeId, position, and salary are required' });
-        }
-
-        // Insert into Web2 DB
-        await pool.query(
-            `INSERT INTO company_employees (employer_id, employee_id, position, status, joined_at)
-             VALUES ($1, $2, $3, 'PROPOSED', NOW())
-             ON CONFLICT (employer_id, employee_id) DO UPDATE SET status = 'PROPOSED', position = EXCLUDED.position, left_at = NULL`,
-            [employerId, employeeId, position]
-        );
-
-        // Fetch user and employer details for payload to Web3 Gateway
-        const empQuery = await pool.query('SELECT web3_employee_id FROM employees WHERE id = $1', [employeeId]);
-        const compQuery = await pool.query('SELECT web3_company_id FROM employers WHERE id = $1', [employerId]);
-        
-        if (empQuery.rows.length === 0 || compQuery.rows.length === 0) {
-            return res.status(404).json({ message: 'Entities not found' });
-        }
-
-        // --- Call Web3 Gateway ---
-        const gatewayUrl = process.env.NEVS_GATEWAY_URL || 'http://localhost:3000';
-        const internalApiKey = process.env.INTERNAL_API_KEY || 'nevs-internal-secret-key';
-        
-        try {
-            const { default: axios } = await import('axios');
-            await axios.post(
-                `${gatewayUrl}/api/internal/propose-employment`,
-                {
-                    employeeID: empQuery.rows[0].web3_employee_id,
-                    companyID: compQuery.rows[0].web3_company_id,
-                    position,
-                    salary,
-                    compensation: compensation || ""
-                },
-                {
-                    headers: { 'x-api-key': internalApiKey }
-                }
-            );
-        } catch (gateErr) {
-            console.error("Gateway call failed for propose-hire:", gateErr.response ? gateErr.response.data : gateErr.message);
-        }
-
-        res.status(200).json({ message: "Employment proposed successfully" });
+        // Delegate to the new hiring controller
+        const { proposeHire: newProposeHire } = await import('./hiringController.js');
+        return newProposeHire(req, res);
     } catch (error) {
         console.error('proposeHire error:', error);
         res.status(500).json({ message: 'Failed to propose hire', error: error.message });

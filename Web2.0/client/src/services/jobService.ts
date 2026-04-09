@@ -58,10 +58,10 @@ export const jobService = {
 
   getPendingOffers: () => apiClient.request<{ offers: Record<string, unknown>[] }>('/jobs/pending-offers'),
 
-  consentHire: (employerId: number) =>
+  consentHire: (employerId: number, recordId?: string) =>
     apiClient.request<{ message: string }>('/jobs/consent-hire', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ employerId }),
+      body: JSON.stringify({ employerId: employerId || undefined, recordId }),
     }),
 };

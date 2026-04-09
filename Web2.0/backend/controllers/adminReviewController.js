@@ -233,3 +233,114 @@ export const adminAction = async (req, res) => {
         res.status(500).json({ message: 'Failed to execute admin action' });
     }
 };
+
+// ─── GET /api/admin/audit-timeline ───────────────────────────────────
+export const getAuditTimeline = async (req, res) => {
+    try {
+        const { limit = 50, offset = 0, functionName } = req.query;
+        
+        let query = `
+            SELECT 
+                mlt.id, mlt.tx_id, mlt.block_number, mlt.channel_name, mlt.chaincode_name,
+                mlt.function_name, mlt.args, mlt.caller_msp, mlt.caller_role, mlt.status, mlt.timestamp,
+                COALESCE(
+                    json_agg(
+                        json_build_object(
+                            'peer_name', me.peer_name,
+                            'msp_id', me.msp_id,
+                            'signature_hash', me.signature_hash,
+                            'endorsed_at', me.endorsed_at
+                        )
+                    ) FILTER (WHERE me.id IS NOT NULL), '[]'
+                ) as endorsements
+            FROM mock_ledger_transactions mlt
+            LEFT JOIN mock_endorsements me ON mlt.tx_id = me.tx_id
+        `;
+        
+        const params = [];
+        if (functionName) {
+            params.push(functionName);
+            query += ` WHERE mlt.function_name = $${params.length}`;
+        }
+        
+        query += ` GROUP BY mlt.id ORDER BY mlt.timestamp DESC`;
+        params.push(parseInt(limit));
+        query += ` LIMIT $${params.length}`;
+        params.push(parseInt(offset));
+        query += ` OFFSET $${params.length}`;
+
+        const result = await pool.query(query, params);
+
+        // Get total count
+        let countQuery = 'SELECT COUNT(*) as total FROM mock_ledger_transactions';
+        const countParams = [];
+        if (functionName) {
+            countParams.push(functionName);
+            countQuery += ` WHERE function_name = $1`;
+        }
+        const countResult = await pool.query(countQuery, countParams);
+
+        res.status(200).json({
+            transactions: result.rows,
+            total: parseInt(countResult.rows[0].total),
+            limit: parseInt(limit),
+            offset: parseInt(offset)
+        });
+    } catch (error) {
+        console.error('getAuditTimeline error:', error);
+        res.status(500).json({ message: 'Failed to fetch audit timeline' });
+    }
+};
+
+// ─── GET /api/admin/employment-stats ─────────────────────────────────
+export const getEmploymentStats = async (req, res) => {
+    try {
+        const statsResult = await pool.query(`
+            SELECT 
+                COUNT(*) FILTER (WHERE status = 'PROPOSED') as proposed,
+                COUNT(*) FILTER (WHERE status = 'CONSENTED') as consented,
+                COUNT(*) FILTER (WHERE status = 'CONFIRMED') as confirmed,
+                COUNT(*) FILTER (WHERE status = 'TERMINATED') as terminated,
+                COUNT(*) as total
+            FROM employment_records
+        `);
+
+        const ledgerStats = await pool.query(`
+            SELECT COUNT(*) as total_blocks,
+                   COUNT(DISTINCT tx_id) as total_transactions
+            FROM mock_ledger_transactions
+        `);
+
+        const companyStats = await pool.query(`
+            SELECT tier, COUNT(*) as count FROM employers WHERE account_status = 'VERIFIED' GROUP BY tier
+        `);
+
+        res.status(200).json({
+            employment: statsResult.rows[0],
+            ledger: ledgerStats.rows[0],
+            companies: companyStats.rows
+        });
+    } catch (error) {
+        console.error('getEmploymentStats error:', error);
+        res.status(500).json({ message: 'Failed to fetch employment stats' });
+    }
+};
+
+// ─── GET /api/admin/employment-records ───────────────────────────────
+export const getAllEmploymentRecords = async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT er.*, 
+                   e.full_name as employee_name, e.email as employee_email,
+                   emp.organization_name, emp.tier
+            FROM employment_records er
+            JOIN employees e ON er.employee_id = e.id
+            JOIN employers emp ON er.employer_id = emp.id
+            ORDER BY er.created_at DESC
+        `);
+        res.status(200).json({ records: result.rows });
+    } catch (error) {
+        console.error('getAllEmploymentRecords error:', error);
+        res.status(500).json({ message: 'Failed to fetch employment records' });
+    }
+};

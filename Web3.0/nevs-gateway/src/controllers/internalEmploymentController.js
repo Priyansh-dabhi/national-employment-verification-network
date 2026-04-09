@@ -13,8 +13,8 @@ exports.proposeEmployment = async (req, res) => {
         const startDate = new Date().toISOString().split('T')[0]; // simple YYYY-MM-DD
         const createdAt = new Date().toISOString();
 
-        // 1. Get the V2 chaincode contract using the Company Gateway Context
-        const contract = fabricService.getCompanyContractV2('EmploymentLifecycleContract');
+        // 1. Get the V2 chaincode contract using the Government God Gateway Context
+        const contract = fabricService.getContractV2('EmploymentLifecycleContract');
 
         // 2. Prepare transaction
         const transaction = contract.createTransaction('ProposeEmployment');
@@ -70,7 +70,8 @@ exports.consentEmployment = async (req, res) => {
         // We need the employmentID. In Phase 4.3 chaincode, EmploymentExists takes employeeID, employmentID.
         // We can query GetEmploymentsByEmployee(employeeID) to find the PROPOSED record.
         const resultBytes = await contract.evaluateTransaction('GetEmploymentsByEmployee', employeeID);
-        const employments = JSON.parse(resultBytes.toString('utf8'));
+        const resultString = resultBytes ? resultBytes.toString('utf8') : '';
+        const employments = resultString ? JSON.parse(resultString) : [];
 
         const proposedRecord = employments.find(e => e.companyId === companyID && e.status === 'PROPOSED');
         if (!proposedRecord) {

@@ -209,6 +209,60 @@ const createTables = async () => {
         );
     `;
 
+    // --- Phase 5: Web2 Hiring Lifecycle + Mock Blockchain Simulation ---
+    const createEmploymentRecordsTable = `
+        CREATE TABLE IF NOT EXISTS employment_records (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            employee_id INTEGER REFERENCES employees(id),
+            employer_id INTEGER REFERENCES employers(id),
+            position VARCHAR(255) NOT NULL,
+            department VARCHAR(100) DEFAULT 'General',
+            salary VARCHAR(100),
+            compensation TEXT,
+            status VARCHAR(20) DEFAULT 'PROPOSED',
+            verification_hash VARCHAR(255),
+            proposed_by VARCHAR(100),
+            proposed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            consented_at TIMESTAMP,
+            confirmed_at TIMESTAMP,
+            terminated_at TIMESTAMP,
+            end_date DATE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    `;
+
+    const createMockLedgerTransactionsTable = `
+        CREATE TABLE IF NOT EXISTS mock_ledger_transactions (
+            id SERIAL PRIMARY KEY,
+            tx_id VARCHAR(255) UNIQUE NOT NULL,
+            block_number INTEGER NOT NULL,
+            channel_name VARCHAR(100) DEFAULT 'nevs-channel',
+            chaincode_name VARCHAR(100) DEFAULT 'employment',
+            function_name VARCHAR(100) NOT NULL,
+            args JSONB NOT NULL,
+            caller_msp VARCHAR(100) NOT NULL,
+            caller_role VARCHAR(50) NOT NULL,
+            status VARCHAR(20) DEFAULT 'VALID',
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    `;
+
+    const createMockEndorsementsTable = `
+        CREATE TABLE IF NOT EXISTS mock_endorsements (
+            id SERIAL PRIMARY KEY,
+            tx_id VARCHAR(255) REFERENCES mock_ledger_transactions(tx_id) ON DELETE CASCADE,
+            peer_name VARCHAR(100) NOT NULL,
+            msp_id VARCHAR(100) NOT NULL,
+            signature_hash VARCHAR(255) NOT NULL,
+            endorsed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    `;
+
+    const alterEmployersForTier = `
+        ALTER TABLE employers ADD COLUMN IF NOT EXISTS tier VARCHAR(20) DEFAULT 'TIER_1';
+    `;
+
 
     try {
         const client = await pool.connect();
@@ -230,6 +284,12 @@ const createTables = async () => {
         await client.query(alterEmployeesTableForWeb3);
         await client.query(alterEmployersTableForWeb3);
         await client.query(createWeb3EventLogTable);
+
+        // Phase 5 Hiring Lifecycle + Mock Blockchain
+        await client.query(createEmploymentRecordsTable);
+        await client.query(createMockLedgerTransactionsTable);
+        await client.query(createMockEndorsementsTable);
+        await client.query(alterEmployersForTier);
         
         console.log('Tables created or already exist');
         client.release();

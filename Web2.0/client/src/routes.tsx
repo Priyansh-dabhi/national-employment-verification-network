@@ -20,8 +20,11 @@ import { CompanyVerificationPage } from './pages/employer/CompanyVerificationPag
 import { EmployeeManagementPage } from './pages/employer/EmployeeManagementPage';
 import { VerifiedEmployeesPage } from './pages/employer/VerifiedEmployeesPage';
 import { VerificationRequestsPage } from './pages/employer/VerificationRequestsPage';
+import { CandidateDiscoveryPage } from './pages/employer/CandidateDiscoveryPage';
+import { MyEmployeesPage } from './pages/employer/MyEmployeesPage';
 import { useAuth } from './context/AuthContext';
 import { getAdminSession, type SessionRole } from './services/sessionService';
+import { AuditTimelinePage } from './pages/admin/AuditTimelinePage';
 
 const Layout = () => (
   <>
@@ -117,7 +120,9 @@ export const router = createBrowserRouter([
       { path: '/employer/profile', element: <EmployerProfilePage /> },
       { path: '/employer/company-verification', element: <CompanyVerificationPage /> },
       { path: '/employer/employees', element: <EmployeeManagementPage /> },
+      { path: '/employer/my-employees', element: <MyEmployeesPage /> },
       { path: '/employer/verified-employees', element: <VerifiedEmployeesPage /> },
+      { path: '/employer/candidates', element: <CandidateDiscoveryPage /> },
       { path: '/employer/verification-requests', element: <VerificationRequestsPage /> },
       { path: '/employer/jobs', element: <EmployerJobs /> },
       { path: '/employer/jobs/:id/applicants', element: <ApplicantsList /> },
@@ -128,7 +133,10 @@ export const router = createBrowserRouter([
     children: [
       {
         element: <Layout />,
-        children: [{ path: '/admin', element: <AdminDashboard /> }],
+        children: [
+          { path: '/admin', element: <AdminDashboard /> },
+          { path: '/admin/audit-timeline', element: <AuditTimelinePage /> },
+        ],
       },
     ],
   },

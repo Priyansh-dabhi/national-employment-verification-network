@@ -4,6 +4,8 @@ import { ArrowLeft, Calendar, CheckCircle, Mail, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { EmployerLayout } from '../employer/EmployerLayout';
 import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { HireModal } from '../../components/employer/HireModal';
 import { employerService } from '../../services/employerService';
 import { jobService, type JobApplicant } from '../../services/jobService';
 
@@ -11,7 +13,10 @@ export const ApplicantsList = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [applicants, setApplicants] = useState<JobApplicant[]>([]);
+  const [jobTitle, setJobTitle] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedApplicant, setSelectedApplicant] = useState<JobApplicant | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchApplicants = async () => {
@@ -27,6 +32,13 @@ export const ApplicantsList = () => {
           return;
         }
 
+        // Fetch the job to get its title
+        const allJobs = await jobService.getEmployerJobs();
+        const currentJob = allJobs.find(j => j.id === Number(id));
+        if (currentJob) {
+          setJobTitle(currentJob.title);
+        }
+
         const records = await jobService.getJobApplicants(Number(id));
         setApplicants(records);
       } catch {
@@ -38,6 +50,24 @@ export const ApplicantsList = () => {
 
     void fetchApplicants();
   }, [id, navigate]);
+
+  const handleHireSubmit = async (data: { position: string; salary: string; compensation: string }) => {
+    if (!selectedApplicant) return;
+    try {
+      await employerService.proposeHire(selectedApplicant.employee_id, data.position, data.salary, data.compensation);
+      setApplicants((prev) =>
+        prev.map((app) =>
+          app.employee_id === selectedApplicant.employee_id
+            ? { ...app, application_status: 'PROPOSED' }
+            : app
+        )
+      );
+      alert('Employment proposed successfully! The blockchain gateway is processing the request.');
+    } catch (error) {
+      console.error('Failed to propose hire:', error);
+      alert('Failed to propose employment. Ensure gateway is running.');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -106,6 +136,19 @@ export const ApplicantsList = () => {
                         <Calendar size={13} />
                         {new Date(applicant.applied_at).toLocaleDateString()}
                       </span>
+                      {applicant.application_status !== 'PROPOSED' && applicant.application_status !== 'HIRED' && (
+                        <Button
+                          type="button"
+                          variant="primary"
+                          onClick={() => {
+                            setSelectedApplicant(applicant);
+                            setIsModalOpen(true);
+                          }}
+                          style={{ marginTop: '0.4rem', padding: '0.3rem 0.8rem', fontSize: '0.8rem' }}
+                        >
+                          Propose Hire
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </Card>
@@ -114,6 +157,17 @@ export const ApplicantsList = () => {
           </div>
         )}
       </div>
+
+      <HireModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedApplicant(null);
+        }}
+        applicantName={selectedApplicant?.name || ''}
+        prefilledPosition={jobTitle}
+        onSubmit={handleHireSubmit}
+      />
     </EmployerLayout>
   );
 };

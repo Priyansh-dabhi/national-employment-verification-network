@@ -9,6 +9,7 @@ import verificationRoutes from './routes/verificationRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import employerRoutes from './routes/employerRoutes.js';
 import webhookRoutes from './routes/webhookRoutes.js';
+import hiringRoutes from './routes/hiringRoutes.js';
 import { createTables } from './config/db.js';
 
 dotenv.config();
@@ -33,6 +34,7 @@ app.use('/api/verification', verificationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/employer', employerRoutes);
 app.use('/api/webhooks', webhookRoutes);
+app.use('/api/hiring', hiringRoutes);
 
 // Health Check
 app.get('/', (req, res) => {

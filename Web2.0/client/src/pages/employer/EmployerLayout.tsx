@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, User, ShieldCheck, Users, ClipboardList, BadgeCheck, LogOut, Briefcase, Menu, X } from 'lucide-react';
+import { LayoutDashboard, User, ShieldCheck, Users, ClipboardList, BadgeCheck, LogOut, Briefcase, Menu, X, Users2, UserSearch } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -7,6 +7,8 @@ const navItems = [
   { to: '/employer/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/employer/profile', icon: User, label: 'Profile' },
   { to: '/employer/company-verification', icon: ShieldCheck, label: 'Company Verification' },
+  { to: '/employer/my-employees', icon: Users2, label: 'My Employees' },
+  { to: '/employer/candidates', icon: UserSearch, label: 'Discover Candidates' },
   { to: '/employer/employees', icon: Users, label: 'Employee Management' },
   { to: '/employer/verification-requests', icon: ClipboardList, label: 'Verification Requests' },
   { to: '/employer/verified-employees', icon: BadgeCheck, label: 'Verified Employees' },

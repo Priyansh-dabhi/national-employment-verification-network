@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
 import { DocumentReviewModal } from './DocumentReviewModal';
-import { ShieldAlert, CheckCircle, AlertCircle, XCircle, Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { ShieldAlert, CheckCircle, AlertCircle, XCircle, Loader2, Blocks } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 import './Admin.css';
 
 export const AdminDashboard = () => {
@@ -56,14 +56,26 @@ export const AdminDashboard = () => {
     return (
         <div className="admin-dash-bg">
             <main className="admin-main">
-                <section className="admin-hero">
-                    <div className="admin-hero__icon">
-                        <ShieldAlert size={20} />
+                <section className="admin-hero" style={{ justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
+                        <div className="admin-hero__icon">
+                            <ShieldAlert size={20} />
+                        </div>
+                        <div>
+                            <h1 className="admin-hero__title">NEVN Central Authority</h1>
+                            <p className="admin-hero__subtitle">Review employee and employer verification queues from the central admin portal.</p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="admin-hero__title">NEVN Central Authority</h1>
-                        <p className="admin-hero__subtitle">Review employee and employer verification queues from the central admin portal.</p>
-                    </div>
+                    <Link to="/admin/audit-timeline" style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                        padding: '0.55rem 1.1rem', borderRadius: '0.6rem',
+                        background: 'linear-gradient(135deg, #eef2ff, #e0e7ff)',
+                        color: '#4338ca', fontWeight: 600, fontSize: '0.85rem',
+                        border: '1px solid #c7d2fe', textDecoration: 'none',
+                        boxShadow: '0 1px 3px rgba(67,56,202,0.1)', transition: 'all 0.2s'
+                    }}>
+                        <Blocks size={16} /> Mock Blockchain Ledger
+                    </Link>
                 </section>
 
                 {/* Metrics */}
