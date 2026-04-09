@@ -175,6 +175,36 @@ const createTables = async () => {
         );
     `;
 
+    // --- Phase 4 Web3 Extensions ---
+    const alterEmployeesTableForWeb3 = `
+        ALTER TABLE employees ADD COLUMN IF NOT EXISTS web3_employee_id UUID;
+        ALTER TABLE employees ADD COLUMN IF NOT EXISTS web3_status VARCHAR(20) DEFAULT 'NONE';
+        ALTER TABLE employees ADD COLUMN IF NOT EXISTS web3_enrollment_id VARCHAR(255);
+        ALTER TABLE employees ADD COLUMN IF NOT EXISTS web3_minted_at TIMESTAMP;
+        ALTER TABLE employees ADD COLUMN IF NOT EXISTS web3_confirmed_at TIMESTAMP;
+    `;
+
+    const alterEmployersTableForWeb3 = `
+        ALTER TABLE employers ADD COLUMN IF NOT EXISTS web3_company_id UUID;
+        ALTER TABLE employers ADD COLUMN IF NOT EXISTS web3_status VARCHAR(20) DEFAULT 'NONE';
+        ALTER TABLE employers ADD COLUMN IF NOT EXISTS web3_enrollment_id VARCHAR(255);
+        ALTER TABLE employers ADD COLUMN IF NOT EXISTS web3_minted_at TIMESTAMP;
+        ALTER TABLE employers ADD COLUMN IF NOT EXISTS web3_confirmed_at TIMESTAMP;
+    `;
+
+    const createWeb3EventLogTable = `
+        CREATE TABLE IF NOT EXISTS web3_event_log (
+            id SERIAL PRIMARY KEY,
+            event_name VARCHAR(100) NOT NULL,
+            tx_id VARCHAR(255) UNIQUE NOT NULL,
+            block_number BIGINT,
+            payload JSONB NOT NULL,
+            processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            status VARCHAR(20) DEFAULT 'RECEIVED'
+        );
+    `;
+
+
     try {
         const client = await pool.connect();
         await client.query(createEmployeesTable);
@@ -190,6 +220,12 @@ const createTables = async () => {
         await client.query(createEmployerVerificationRequestsTable);
         await client.query(createCompanyEmployeesTable);
         await client.query(createRefreshTokensTable);
+        
+        // Phase 4 Web3 Additions
+        await client.query(alterEmployeesTableForWeb3);
+        await client.query(alterEmployersTableForWeb3);
+        await client.query(createWeb3EventLogTable);
+        
         console.log('Tables created or already exist');
         client.release();
     } catch (err) {

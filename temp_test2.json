@@ -1,0 +1,112 @@
+{
+  "stopPeer1": {
+    "path": "/api/godmode/peer/stop",
+    "status": 200,
+    "data": {
+      "success": true,
+      "timestamp": "2026-02-27T10:39:15.513Z",
+      "peerUsed": null,
+      "txId": "Stopped peer1.central.govt",
+      "data": {
+        "output": "peer1.central.govt"
+      }
+    }
+  },
+  "networkStatusAfterStop": {
+    "path": "/api/godmode/network/status",
+    "status": 200,
+    "data": {
+      "success": true,
+      "timestamp": "2026-02-27T10:39:18.040Z",
+      "peerUsed": null,
+      "txId": null,
+      "data": [
+        {
+          "name": "nevs-gateway",
+          "status": "Up About an hour",
+          "ports": "0.0.0.0:3000->3000/tcp, :::3000->3000/tcp",
+          "isUp": true
+        },
+        {
+          "name": "peer1.central.govt",
+          "status": "Exited (0) 3 seconds ago",
+          "ports": "",
+          "isUp": false
+        },
+        {
+          "name": "employment.cc",
+          "status": "Up 5 hours",
+          "ports": "0.0.0.0:9999->9999/tcp, :::9999->9999/tcp",
+          "isUp": true
+        },
+        {
+          "name": "peer0.central.govt",
+          "status": "Up About an hour",
+          "ports": "0.0.0.0:7051->7051/tcp, :::7051->7051/tcp",
+          "isUp": true
+        },
+        {
+          "name": "orderer.nevs.gov",
+          "status": "Up 5 hours",
+          "ports": "0.0.0.0:7050->7050/tcp, :::7050->7050/tcp, 0.0.0.0:7053->7053/tcp, :::7053->7053/tcp",
+          "isUp": true
+        }
+      ]
+    }
+  },
+  "startPeer1": {
+    "path": "/api/godmode/peer/start",
+    "status": 200,
+    "data": {
+      "success": true,
+      "timestamp": "2026-02-27T10:39:19.403Z",
+      "peerUsed": null,
+      "txId": "Started peer1.central.govt",
+      "data": {
+        "output": "peer1.central.govt"
+      }
+    }
+  },
+  "networkStatusAfterStart": {
+    "path": "/api/godmode/network/status",
+    "status": 200,
+    "data": {
+      "success": true,
+      "timestamp": "2026-02-27T10:39:21.654Z",
+      "peerUsed": null,
+      "txId": null,
+      "data": [
+        {
+          "name": "nevs-gateway",
+          "status": "Up About an hour",
+          "ports": "0.0.0.0:3000->3000/tcp, :::3000->3000/tcp",
+          "isUp": true
+        },
+        {
+          "name": "peer1.central.govt",
+          "status": "Up 3 seconds",
+          "ports": "0.0.0.0:8051->8051/tcp, :::8051->8051/tcp",
+          "isUp": true
+        },
+        {
+          "name": "employment.cc",
+          "status": "Up 5 hours",
+          "ports": "0.0.0.0:9999->9999/tcp, :::9999->9999/tcp",
+          "isUp": true
+        },
+        {
+          "name": "peer0.central.govt",
+          "status": "Up About an hour",
+          "ports": "0.0.0.0:7051->7051/tcp, :::7051->7051/tcp",
+          "isUp": true
+        },
+        {
+          "name": "orderer.nevs.gov",
+          "status": "Up 5 hours",
+          "ports": "0.0.0.0:7050->7050/tcp, :::7050->7050/tcp, 0.0.0.0:7053->7053/tcp, :::7053->7053/tcp",
+          "isUp": true
+        }
+      ]
+    }
+  }
+}

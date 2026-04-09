@@ -1,6 +1,7 @@
 import { pool } from '../config/db.js';
 import Tesseract from 'tesseract.js';
 import crypto from 'crypto';
+import { mintEmployeeIdentity } from '../src/services/web3IdentityService.js';
 
 export const uploadAndVerifyDocument = async (req, res) => {
     try {
@@ -101,6 +102,9 @@ export const uploadAndVerifyDocument = async (req, res) => {
         // Update Account Status
         if (status === 'VERIFIED') {
             await pool.query("UPDATE employees SET account_status = 'VERIFIED' WHERE id = $1", [userId]);
+            
+            // Phase 4: Trigger Web3 Identity Minting
+            mintEmployeeIdentity(userId).catch(err => console.error("Web3 Minting Error:", err));
         } else if (status === 'UNDER REVIEW') {
             await pool.query("UPDATE employees SET account_status = 'PENDING' WHERE id = $1", [userId]);
         }

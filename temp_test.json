@@ -1,0 +1,30 @@
+{
+  "getEmployeeInfo": {
+    "path": "/api/employment/employee/EMP123",
+    "status": 500,
+    "data": {
+      "success": false,
+      "timestamp": "2026-02-27T10:37:50.512Z",
+      "message": "Failed to fetch employment history",
+      "details": "Error handling success response. Value did not match schema:\n1. return.0: endDate is required"
+    }
+  },
+  "stopPeer1": {
+    "path": "/api/godmode/peer/stop",
+    "status": 400,
+    "data": {
+      "success": false,
+      "timestamp": "2026-02-27T10:37:50.521Z",
+      "message": "Invalid container name. Allowed: peer0.central.govt, peer1.central.govt, orderer.nevs.gov, employment.cc"
+    }
+  },
+  "startPeer1": {
+    "path": "/api/godmode/peer/start",
+    "status": 400,
+    "data": {
+      "success": false,
+      "timestamp": "2026-02-27T10:37:50.524Z",
+      "message": "Invalid container name. Allowed: peer0.central.govt, peer1.central.govt, orderer.nevs.gov, employment.cc"
+    }
+  }
+}

@@ -1,6 +1,7 @@
 import { pool } from '../config/db.js';
 import { generateSignedUrl } from '../utils/cloudinary.js';
 import { decryptBuffer, decryptKeyWithMaster } from '../utils/encryption.js';
+import { mintEmployeeIdentity, mintCompanyIdentity } from '../src/services/web3IdentityService.js';
 
 // GET /api/admin/review-documents
 export const getReviewDocuments = async (req, res) => {
@@ -181,6 +182,11 @@ export const adminAction = async (req, res) => {
                  WHERE employer_id = $3 AND status = 'PENDING'`,
                  [newDocStatus, reason, employerId]
             );
+
+            // Phase 4: Trigger Web3 Identity Minting for Company
+            if (action === 'APPROVE') {
+                mintCompanyIdentity(employerId).catch(err => console.error("Web3 Company Minting Error:", err));
+            }
         } else {
             const docQuery = await pool.query('SELECT employee_id, document_type FROM documents WHERE id = $1', [documentId]);
             if (docQuery.rows.length === 0) return res.status(404).json({ message: 'Document not found' });
@@ -196,6 +202,11 @@ export const adminAction = async (req, res) => {
                 INSERT INTO verification_logs (user_id, document_type, score, status, details_json)
                 VALUES ($1, $2, $3, $4, $5)
             `, [employeeId, docType, 100, action, details]);
+            
+            // Phase 4: Trigger Web3 Identity Minting for Employee
+            if (action === 'APPROVE') {
+                mintEmployeeIdentity(employeeId).catch(err => console.error("Web3 Employee Minting Error:", err));
+            }
         }
 
         // Add Mock Blockchain Ledger logic
