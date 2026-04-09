@@ -49,6 +49,18 @@ func GetCallerCompanyID(ctx contractapi.TransactionContextInterface) (string, er
 	return companyID, nil
 }
 
+// GetCallerEmployeeID extracts the "employeeID" attribute from the caller's certificate.
+func GetCallerEmployeeID(ctx contractapi.TransactionContextInterface) (string, error) {
+	employeeID, found, err := ctx.GetClientIdentity().GetAttributeValue("employeeID")
+	if err != nil {
+		return "", fmt.Errorf("failed to get employeeID attribute: %v", err)
+	}
+	if !found || employeeID == "" {
+		return "", fmt.Errorf("employeeID attribute not found in certificate")
+	}
+	return employeeID, nil
+}
+
 // RequireRole verifies the caller has the expected role. Returns error if not.
 func RequireRole(ctx contractapi.TransactionContextInterface, expectedRole string) error {
 	role, err := GetCallerRole(ctx)

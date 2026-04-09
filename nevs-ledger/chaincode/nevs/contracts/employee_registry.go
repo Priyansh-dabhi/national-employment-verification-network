@@ -62,7 +62,17 @@ func (s *EmployeeRegistryContract) RegisterEmployee(ctx contractapi.TransactionC
 		return err
 	}
 
-	return ctx.GetStub().PutState(indexKey, employeeJSON)
+	err = ctx.GetStub().PutState(indexKey, employeeJSON)
+	if err != nil {
+		return err
+	}
+
+	err = ctx.GetStub().SetEvent("EmployeeRegistered", employeeJSON)
+	if err != nil {
+		return fmt.Errorf("failed to set event: %v", err)
+	}
+
+	return nil
 }
 
 // GetEmployee retrieves an employee by its ID (No specific role required for reads)

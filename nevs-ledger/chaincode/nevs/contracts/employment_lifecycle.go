@@ -117,7 +117,17 @@ func (s *EmploymentLifecycleContract) ProposeEmployment(ctx contractapi.Transact
 		return err
 	}
 	
-	return ctx.GetStub().PutState(secKey, employmentJSON)
+	err = ctx.GetStub().PutState(secKey, employmentJSON)
+	if err != nil {
+		return err
+	}
+
+	err = ctx.GetStub().SetEvent("EmploymentProposed", employmentJSON)
+	if err != nil {
+		return fmt.Errorf("failed to set event: %v", err)
+	}
+
+	return nil
 }
 
 // EmployeeConsent transitions PROPOSED to CONSENTED (Requires employee or govt role)
@@ -129,6 +139,16 @@ func (s *EmploymentLifecycleContract) EmployeeConsent(ctx contractapi.Transactio
 
 	if role != utils.RoleGovt && role != utils.RoleEmployee {
 		return fmt.Errorf("access denied: only govt or employee can consent to employment")
+	}
+
+	if role == utils.RoleEmployee {
+		callerEmployeeID, err := utils.GetCallerEmployeeID(ctx)
+		if err != nil {
+			return err
+		}
+		if callerEmployeeID != employeeID {
+			return fmt.Errorf("access denied: employee %s cannot consent for employee %s", callerEmployeeID, employeeID)
+		}
 	}
 
 	employment, err := s.GetEmployment(ctx, employeeID, employmentID)
@@ -144,7 +164,13 @@ func (s *EmploymentLifecycleContract) EmployeeConsent(ctx contractapi.Transactio
 	employment.UpdatedAt = updatedAt
 	employment.ConsentedAt = updatedAt
 
-	return s.saveEmploymentState(ctx, employment)
+	err = s.saveEmploymentState(ctx, employment)
+	if err != nil {
+		return err
+	}
+
+	employmentJSON, _ := json.Marshal(employment)
+	return ctx.GetStub().SetEvent("EmploymentConsented", employmentJSON)
 }
 
 // ConfirmEmployment transitions CONSENTED to CONFIRMED (Requires govt role)
@@ -167,7 +193,13 @@ func (s *EmploymentLifecycleContract) ConfirmEmployment(ctx contractapi.Transact
 	employment.UpdatedAt = updatedAt
 	employment.ConfirmedAt = updatedAt
 
-	return s.saveEmploymentState(ctx, employment)
+	err = s.saveEmploymentState(ctx, employment)
+	if err != nil {
+		return err
+	}
+
+	employmentJSON, _ := json.Marshal(employment)
+	return ctx.GetStub().SetEvent("EmploymentConfirmed", employmentJSON)
 }
 
 // TerminateEmployment transitions CONFIRMED to TERMINATED (Requires company or govt role)
@@ -205,7 +237,13 @@ func (s *EmploymentLifecycleContract) TerminateEmployment(ctx contractapi.Transa
 	employment.UpdatedAt = updatedAt
 	employment.TerminatedAt = updatedAt
 
-	return s.saveEmploymentState(ctx, employment)
+	err = s.saveEmploymentState(ctx, employment)
+	if err != nil {
+		return err
+	}
+
+	employmentJSON, _ := json.Marshal(employment)
+	return ctx.GetStub().SetEvent("EmploymentTerminated", employmentJSON)
 }
 
 // GetEmployment retrieves employment by ID
