@@ -1,0 +1,1 @@
+const { pool } = require('./backend/config/db.js'); pool.query(SELECT * FROM web3_event_log ORDER BY created_at DESC LIMIT 1).then(res => { console.log(JSON.stringify(res.rows, null, 2)); pool.end(); });

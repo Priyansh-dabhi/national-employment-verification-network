@@ -1,5 +1,5 @@
 export type UserRole = 'employee' | 'employer' | 'admin';
-export type VerificationStatus = 'verified' | 'pending' | 'rejected' | 'unverified';
+export type VerificationStatus = 'verified' | 'pending' | 'processing' | 'rejected' | 'unverified';
 
 export interface User {
     id: string;

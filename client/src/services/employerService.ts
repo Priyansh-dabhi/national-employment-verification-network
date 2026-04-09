@@ -44,4 +44,13 @@ export const employerService = {
     apiClient.request<{ message: string; record: Record<string, unknown> }>(`/employer/employees/${employeeId}/leave`, {
       method: 'POST',
     }),
+
+  getAvailableEmployees: () => apiClient.request<{ employees: Record<string, unknown>[] }>('/employer/available-employees'),
+
+  proposeHire: (employeeId: number, position: string, salary: string, compensation?: string) =>
+    apiClient.request<{ message: string }>('/employer/propose-hire', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ employeeId, position, salary, compensation }),
+    }),
 };

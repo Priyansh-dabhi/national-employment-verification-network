@@ -2,7 +2,8 @@ import { pool } from '../config/db.js';
 
 export const handleEmployeeRegistered = async (req, res) => {
     const { txId, blockNumber, payload } = req.body;
-    const { employeeID, status } = payload; 
+    const web3Id = payload.employeeID || payload.employeeId;
+    const status = payload.status;
 
     try {
         await pool.query('BEGIN');
@@ -14,14 +15,27 @@ export const handleEmployeeRegistered = async (req, res) => {
             return res.status(200).json({ message: 'Event already processed' });
         }
 
-        // Update employee state
+        // Update employee state and account_status upon successful registration
         await pool.query(
             `UPDATE employees SET 
                 web3_status = $1, 
-                web3_confirmed_at = CURRENT_TIMESTAMP 
+                web3_confirmed_at = CURRENT_TIMESTAMP,
+                account_status = 'VERIFIED'
              WHERE web3_employee_id = $2`,
-            [status, employeeID]
+            [status, web3Id]
         );
+
+        // Fetch local employee ID to update their documents
+        const empQuery = await pool.query('SELECT id FROM employees WHERE web3_employee_id = $1', [web3Id]);
+        if (empQuery.rows.length > 0) {
+            const localEmployeeId = empQuery.rows[0].id;
+            // Update documents that are in 'PROCESSING' state to 'VERIFIED'
+            await pool.query(
+                `UPDATE documents SET verification_status = 'VERIFIED' 
+                 WHERE employee_id = $1 AND verification_status = 'PROCESSING'`,
+                [localEmployeeId]
+            );
+        }
 
         // Record the event
         await pool.query(

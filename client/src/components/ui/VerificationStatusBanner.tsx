@@ -37,6 +37,14 @@ export const VerificationStatusBanner: React.FC<VerificationStatusBannerProps> =
       bg: '#fffbeb',
       message: 'Your submitted details are being reviewed by the authority team.',
     },
+    processing: {
+      icon: Clock,
+      title: 'Verification processing via Webhook',
+      color: 'var(--color-info, #0ea5e9)',
+      border: '#bae6fd',
+      bg: '#f0f9ff',
+      message: 'Your verification has been approved and is currently being processed on the blockchain network.',
+    },
     rejected: {
       icon: ShieldAlert,
       title: 'Verification rejected',

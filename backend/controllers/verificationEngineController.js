@@ -101,10 +101,24 @@ export const uploadAndVerifyDocument = async (req, res) => {
 
         // Update Account Status
         if (status === 'VERIFIED') {
-            await pool.query("UPDATE employees SET account_status = 'VERIFIED' WHERE id = $1", [userId]);
-            
-            // Phase 4: Trigger Web3 Identity Minting
-            mintEmployeeIdentity(userId).catch(err => console.error("Web3 Minting Error:", err));
+            try {
+                // Phase 4: Trigger Web3 Identity Minting First
+                await mintEmployeeIdentity(userId);
+
+                // If minting succeeds, mark as VERIFIED
+                await pool.query("UPDATE employees SET account_status = 'VERIFIED' WHERE id = $1", [userId]);
+            } catch (err) {
+                console.error("Web3 Minting Error:", err);
+                
+                // Revert status in logs DB since the minting failed
+                await pool.query(
+                    "UPDATE verification_logs SET status = 'UNDER REVIEW' WHERE user_id = $1 AND document_type = $2 AND status = 'VERIFIED' RETURNING id", 
+                    [userId, idType]
+                );
+                await pool.query("UPDATE employees SET account_status = 'PENDING' WHERE id = $1", [userId]);
+                
+                status = 'UNDER REVIEW'; // Change returned status to reflect failure
+            }
         } else if (status === 'UNDER REVIEW') {
             await pool.query("UPDATE employees SET account_status = 'PENDING' WHERE id = $1", [userId]);
         }

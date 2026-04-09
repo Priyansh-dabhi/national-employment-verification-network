@@ -10,9 +10,10 @@ interface StatusBadgeProps {
 }
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
-    const styles = {
+    const styles: Record<string, { bg: string, color: string, border: string, icon: any, label: string }> = {
         verified: { bg: '#ecfdf3', color: '#15803d', border: '#bbf7d0', icon: CheckCircle, label: 'Verified' },
         pending: { bg: '#fffbeb', color: '#b45309', border: '#fcd34d', icon: Clock, label: 'Pending' },
+        processing: { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe', icon: Clock, label: 'Processing' },
         rejected: { bg: '#fef2f2', color: '#b91c1c', border: '#fecaca', icon: XCircle, label: 'Rejected' },
         unverified: { bg: '#f8fafc', color: '#475569', border: '#cbd5e1', icon: XCircle, label: 'Unverified' },
     };

@@ -156,7 +156,7 @@ export const adminAction = async (req, res) => {
         let newAccStatus = '';
 
         if (action === 'APPROVE') {
-            newDocStatus = 'VERIFIED';
+            newDocStatus = 'VERIFIED'; // Default, will override for Employees below
             newAccStatus = 'VERIFIED';
         } else if (action === 'REJECT') {
             newDocStatus = 'REJECTED';
@@ -172,6 +172,16 @@ export const adminAction = async (req, res) => {
             
             const employerId = docQuery.rows[0].employer_id;
             
+            // Phase 4: Trigger Web3 Identity Minting for Company First
+            if (action === 'APPROVE') {
+                try {
+                    await mintCompanyIdentity(employerId);
+                } catch (err) {
+                    console.error("Web3 Company Minting Error:", err);
+                    return res.status(500).json({ message: 'Failed to mint company identity on ledger. Account remains unverified.' });
+                }
+            }
+
             await pool.query('UPDATE employer_documents SET verification_status = $1 WHERE id = $2', [newDocStatus, documentId]);
             await pool.query('UPDATE employers SET account_status = $1 WHERE id = $2', [newAccStatus, employerId]);
             
@@ -182,17 +192,25 @@ export const adminAction = async (req, res) => {
                  WHERE employer_id = $3 AND status = 'PENDING'`,
                  [newDocStatus, reason, employerId]
             );
-
-            // Phase 4: Trigger Web3 Identity Minting for Company
-            if (action === 'APPROVE') {
-                mintCompanyIdentity(employerId).catch(err => console.error("Web3 Company Minting Error:", err));
-            }
         } else {
             const docQuery = await pool.query('SELECT employee_id, document_type FROM documents WHERE id = $1', [documentId]);
             if (docQuery.rows.length === 0) return res.status(404).json({ message: 'Document not found' });
             
             const employeeId = docQuery.rows[0].employee_id;
             const docType = docQuery.rows[0].document_type;
+
+            // Phase 4: Trigger Web3 Identity Minting for Employee First
+            if (action === 'APPROVE') {
+                // For Employees, we set status to PROCESSING because web3 registration is asynchronous
+                newDocStatus = 'PROCESSING';
+                newAccStatus = 'PROCESSING';
+                try {
+                    await mintEmployeeIdentity(employeeId);
+                } catch (err) {
+                    console.error("Web3 Employee Minting Error:", err);
+                    return res.status(500).json({ message: 'Failed to mint employee identity on ledger. Account remains unverified.' });
+                }
+            }
 
             await pool.query('UPDATE documents SET verification_status = $1 WHERE id = $2', [newDocStatus, documentId]);
             await pool.query('UPDATE employees SET account_status = $1 WHERE id = $2', [newAccStatus, employeeId]);
@@ -202,11 +220,6 @@ export const adminAction = async (req, res) => {
                 INSERT INTO verification_logs (user_id, document_type, score, status, details_json)
                 VALUES ($1, $2, $3, $4, $5)
             `, [employeeId, docType, 100, action, details]);
-            
-            // Phase 4: Trigger Web3 Identity Minting for Employee
-            if (action === 'APPROVE') {
-                mintEmployeeIdentity(employeeId).catch(err => console.error("Web3 Employee Minting Error:", err));
-            }
         }
 
         // Add Mock Blockchain Ledger logic

@@ -8,11 +8,12 @@ import { DocumentSubmissionForm, type DocumentSubmissionData } from '../../compo
 import { VerificationStatusBanner } from '../../components/ui/VerificationStatusBanner';
 import { BlockchainProofModal } from '../../components/ui/BlockchainProofModal';
 import { documentService } from '../../services/documentService';
+import { jobService } from '../../services/jobService';
 import { verificationService } from '../../services/verificationService';
 import { authService } from '../../services/authService';
 import { useNavigate, Link } from 'react-router-dom';
 import type { Document, VerificationStatus } from '../../types';
-import { User, FileText, Shield, Calendar, MapPin, Briefcase } from 'lucide-react';
+import { User, FileText, Shield, Calendar, MapPin, Briefcase, CheckCircle2, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface EmployeeProfile {
@@ -27,7 +28,7 @@ interface EmployeeProfile {
   account_status: string;
 }
 
-type DashboardTab = 'profile' | 'verification' | 'documents';
+type DashboardTab = 'profile' | 'verification' | 'documents' | 'offers';
 
 export const EmployeeDashboard = () => {
   const navigate = useNavigate();
@@ -37,6 +38,8 @@ export const EmployeeDashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProofModalOpen, setIsProofModalOpen] = useState(false);
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [offers, setOffers] = useState<any[]>([]);
+  const [isConsenting, setIsConsenting] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<DashboardTab>('documents');
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>('unverified');
@@ -71,6 +74,10 @@ export const EmployeeDashboard = () => {
 
         const docs = await documentService.getDocuments(String(profileUser.id));
         setDocuments(docs);
+        try {
+          const pending = await jobService.getPendingOffers();
+          setOffers(pending.offers);
+        } catch(e) { console.error('Failed fetching offers', e); }
       } catch (error) {
         console.error('Failed to fetch profile', error);
         navigate('/login');
@@ -90,6 +97,19 @@ export const EmployeeDashboard = () => {
     setActiveTab('documents');
     setErrorBanner(null);
     setFileUploadResetKey((current) => current + 1);
+  };
+
+  const handleConsent = async (employerId: number) => {
+    try {
+      setIsConsenting(employerId);
+      await jobService.consentHire(employerId);
+      const pending = await jobService.getPendingOffers();
+      setOffers(pending.offers);
+    } catch(e) {
+      console.error(e);
+    } finally {
+      setIsConsenting(null);
+    }
   };
 
   const handleApplyForVerification = async () => {
@@ -173,7 +193,7 @@ export const EmployeeDashboard = () => {
       />
 
       <div className="tab-group" style={{ marginBottom: '1.2rem' }}>
-        {(['profile', 'verification', 'documents'] as DashboardTab[]).map((tab) => (
+        {(['profile', 'verification', 'documents', 'offers'] as DashboardTab[]).map((tab) => (
           <button
             key={tab}
             type="button"
@@ -363,6 +383,43 @@ export const EmployeeDashboard = () => {
           />
         ) : null}
       </Modal>
+
+
+      {activeTab === 'offers' ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Briefcase size={18} color="var(--color-highlight)" /> Pending Job Offers
+          </h2>
+          {offers.length === 0 ? (
+            <Card>
+              <div style={{ textAlign: 'center', padding: '1.8rem', color: 'var(--color-text-muted)' }}>
+                <p>No pending offers available.</p>
+              </div>
+            </Card>
+          ) : (
+            offers.map((offer) => (
+              <Card key={offer.proposal_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <div style={{ padding: '0.8rem', background: 'rgba(56, 189, 248, 0.1)', borderRadius: 'var(--radius-md)' }}>
+                    <Briefcase size={20} color="var(--color-highlight)" />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{offer.position}</h3>
+                    <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>{offer.organization_name} — {offer.city}</p>
+                    <p style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: '0.2rem' }}>Proposed: {new Date(offer.proposed_at).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
+                  <span className="ui-pill" style={{ background: 'rgba(234, 179, 8, 0.15)', color: 'var(--color-warning)' }}><Clock size={12}/> Pending Consent</span>
+                  <Button variant="primary" onClick={() => handleConsent(offer.employer_id)} isLoading={isConsenting === offer.employer_id}>
+                    <CheckCircle2 size={16} /> Accept & Consent
+                  </Button>
+                </div>
+              </Card>
+            ))
+          )}
+        </div>
+      ) : null}
 
       <BlockchainProofModal
         isOpen={isProofModalOpen}

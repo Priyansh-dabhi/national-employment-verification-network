@@ -37,6 +37,9 @@ export const mintEmployeeIdentity = async (employeeId) => {
 
         if (response.status === 202) {
             console.log(`Identity minting initiated for employee ${employeeId}`);
+            return true;
+        } else {
+            throw new Error(`Unexpected Web3 gateway response status: ${response.status}`);
         }
     } catch (error) {
         console.error('Failed to trigger Web3 identity minting for employee:', error);
@@ -44,6 +47,7 @@ export const mintEmployeeIdentity = async (employeeId) => {
             "UPDATE employees SET web3_status = 'FAILED' WHERE id = $1",
             [employeeId]
         );
+        throw error;
     }
 };
 
@@ -70,6 +74,9 @@ export const mintCompanyIdentity = async (employerId) => {
 
         if (response.status === 202) {
             console.log(`Identity minting initiated for employer ${employerId}`);
+            return true;
+        } else {
+            throw new Error(`Unexpected Web3 gateway response status: ${response.status}`);
         }
     } catch (error) {
         console.error('Failed to trigger Web3 identity minting for employer:', error);
@@ -77,5 +84,6 @@ export const mintCompanyIdentity = async (employerId) => {
             "UPDATE employers SET web3_status = 'FAILED' WHERE id = $1",
             [employerId]
         );
+        throw error;
     }
 };

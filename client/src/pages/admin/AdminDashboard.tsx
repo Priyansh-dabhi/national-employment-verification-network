@@ -40,6 +40,8 @@ export const AdminDashboard = () => {
         switch(status) {
             case 'VERIFIED':
                 return <span className="admin-chip admin-chip-verified"><CheckCircle size={14}/> Verified</span>;
+            case 'PROCESSING':
+                return <span className="admin-chip admin-chip-info" style={{background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8'}}><Loader2 size={14} className="admin-spin" /> Processing</span>;
             case 'UNDER_REVIEW':
             case 'PENDING':
                 return <span className="admin-chip admin-chip-review admin-pulse"><AlertCircle size={14} /> Review</span>;

@@ -5,7 +5,9 @@ import {
     applyForJob,
     getEmployerJobs,
     getJobApplicants,
-    getEmployeeApplications
+    getEmployeeApplications,
+    getPendingOffers,
+    consentHire
 } from '../controllers/jobController.js';
 import authMiddleware from '../middleware/authMiddleware.js';
 import { authorizeRoles } from '../middleware/roleMiddleware.js';
