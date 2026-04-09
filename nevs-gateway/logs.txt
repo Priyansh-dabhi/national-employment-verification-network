@@ -1,0 +1,8 @@
+﻿
+> nevs-gateway@1.0.0 start
+> node src/server.js
+
+
+> nevs-gateway@1.0.0 start
+> node src/server.js
+

@@ -8,9 +8,9 @@ const { logTransaction } = require('../utils/logger');
 
 class WebhookDispatcher {
     constructor() {
-        this.webhookBaseUrl = process.env.WEBHOOK_BASE_URL || 'http://localhost:4000';
+        this.webhookBaseUrl = process.env.WEBHOOK_BASE_URL || 'http://localhost:5000';
         this.webhookSecret = process.env.WEBHOOK_SECRET || 'nevs-webhook-hmac-secret';
-        
+
         // Map chaincode events to slugified webhook paths
         this.eventMap = {
             'EmployeeRegistered': '/api/webhooks/fabric/employee-registered',

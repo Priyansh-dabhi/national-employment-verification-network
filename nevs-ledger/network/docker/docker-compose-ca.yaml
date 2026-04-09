@@ -14,3 +14,9 @@ services:
     volumes:
       - ../organizations/peerOrganizations/central.govt/ca:/etc/hyperledger/fabric-ca-server
     command: sh -c 'fabric-ca-server start -b admin:adminpw -d'
+    networks:              # <--- ADD THIS
+      - nevs_net      # <--- ADD THIS
+
+networks:                  # <--- ADD THIS BLOCK AT THE VERY BOTTOM
+  nevs_net:
+    name: nevs_network

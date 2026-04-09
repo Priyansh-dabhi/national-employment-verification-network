@@ -14,7 +14,7 @@ class FabricCAService {
         this.caAdminPw = process.env.FABRIC_CA_ADMIN_PW || 'adminpw';
         this.mspId = process.env.MSPID || 'CentralGovtMSP';
         this.walletPath = process.env.WALLET_PATH || path.join(__dirname, '..', '..', 'wallet');
-        
+
         // For local development, TLS verification is set to false
         // In production, `trustedRoots` should be populated with the root CA certificate
         this.caClient = new FabricCAServices(this.caURL, { trustedRoots: [], verify: false }, this.caName);
@@ -32,7 +32,7 @@ class FabricCAService {
                 console.log('An identity for the admin user already exists in the wallet');
                 return;
             }
-            
+
             console.log(`Enrolling admin user ${this.caAdmin} with CA...`);
             const enrollment = await this.caClient.enroll({
                 enrollmentID: this.caAdmin,
@@ -67,7 +67,7 @@ class FabricCAService {
             const adminUser = await provider.getUserContext(adminIdentity, this.caAdmin);
 
             const enrollmentID = `employee_${employeeID}`;
-            
+
             // Check if user already exists
             const userIdentity = await wallet.get(enrollmentID);
             if (userIdentity) {
@@ -126,7 +126,7 @@ class FabricCAService {
             const adminUser = await provider.getUserContext(adminIdentity, this.caAdmin);
 
             const enrollmentID = `company_${companyID}`;
-            
+
             // Check if user already exists
             const userIdentity = await wallet.get(enrollmentID);
             if (userIdentity) {

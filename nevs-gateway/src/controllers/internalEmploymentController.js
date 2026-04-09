@@ -1,5 +1,5 @@
 const fabricService = require('../services/fabricService');
-const { v4: uuidv4 } = require('uuid');
+const { randomUUID } = require('crypto');
 
 exports.proposeEmployment = async (req, res) => {
     try {
@@ -9,7 +9,7 @@ exports.proposeEmployment = async (req, res) => {
             return res.status(400).json({ error: 'employeeID, companyID, length and position are required' });
         }
 
-        const employmentID = uuidv4();
+        const employmentID = randomUUID();
         const startDate = new Date().toISOString().split('T')[0]; // simple YYYY-MM-DD
         const createdAt = new Date().toISOString();
 

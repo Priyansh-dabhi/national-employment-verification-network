@@ -202,7 +202,7 @@ class FabricService extends EventEmitter {
         if (!this.network) {
             throw new Error('Fabric connection not initialized');
         }
-        const chaincodeName = process.env.CHAINCODE_NAME_V2 || 'nevs';
+        const chaincodeName = process.env.CHAINCODE_NAME_V2 || 'employment';
         return this.network.getContract(chaincodeName, contractName);
     }
 
