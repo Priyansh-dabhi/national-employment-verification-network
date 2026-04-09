@@ -13,8 +13,8 @@ exports.proposeEmployment = async (req, res) => {
         const startDate = new Date().toISOString().split('T')[0]; // simple YYYY-MM-DD
         const createdAt = new Date().toISOString();
 
-        // 1. Get the V2 chaincode contract
-        const contract = fabricService.getContractV2('EmploymentLifecycleContract');
+        // 1. Get the V2 chaincode contract using the Company Gateway Context
+        const contract = fabricService.getCompanyContractV2('EmploymentLifecycleContract');
 
         // 2. Prepare transaction
         const transaction = contract.createTransaction('ProposeEmployment');
@@ -80,9 +80,12 @@ exports.consentEmployment = async (req, res) => {
         const employmentID = proposedRecord.employmentId;
         const updatedAt = new Date().toISOString();
 
-        await contract.submitTransaction('EmployeeConsent', employeeID, employmentID, updatedAt);
+        // Authentic Employee Cryptographic Consent
+        const employeeWalletLabel = `employee_${employeeID}`;
+        const employeeContract = await fabricService.getEmployeeContractV2(employeeWalletLabel, 'EmploymentLifecycleContract');
+        await employeeContract.submitTransaction('EmployeeConsent', employeeID, employmentID, updatedAt);
 
-        // Auto-confirm for Final Submission
+        // Auto-confirm for Final Submission via Government Authority
         await contract.submitTransaction('ConfirmEmployment', employeeID, employmentID, updatedAt);
 
         console.log(`Successfully consented and confirmed employment ${employmentID} on ledger`);

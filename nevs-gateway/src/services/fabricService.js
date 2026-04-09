@@ -9,6 +9,12 @@ class FabricService extends EventEmitter {
         this.gateway = null;
         this.network = null;
         this.contract = null;
+        
+        this.companyGateway = null;
+        this.companyNetwork = null;
+        this.ccp = null;
+        this.wallet = null;
+
         this.isReady = false;
     }
 
@@ -40,14 +46,19 @@ class FabricService extends EventEmitter {
             // Tear down the stale connection
             this.isReady = false;
             this.emit('disconnected', { isReady: false });
-            this.gateway.disconnect();
+            if (this.gateway) this.gateway.disconnect();
+            if (this.companyGateway) this.companyGateway.disconnect();
+            
             this.gateway = null;
             this.network = null;
             this.contract = null;
+            
+            this.companyGateway = null;
+            this.companyNetwork = null;
 
             await new Promise(resolve => setTimeout(resolve, delaySec * 1000));
 
-            // Reconnect
+            // Reconnect primary Gateway
             this.gateway = new Gateway();
             await this.gateway.connect(ccp, {
                 wallet,
@@ -60,6 +71,26 @@ class FabricService extends EventEmitter {
             });
             this.network = await this.gateway.getNetwork(channelName);
             this.contract = this.network.getContract(process.env.CHAINCODE_NAME || 'employment');
+            
+            // Reconnect Company Gateway if available
+            try {
+                const companyCcp = JSON.parse(JSON.stringify(ccp));
+                if (companyCcp.client) companyCcp.client.organization = "CompanyOrg";
+                
+                this.companyGateway = new Gateway();
+                await this.companyGateway.connect(companyCcp, {
+                    wallet,
+                    identity: 'Admin@company.org',
+                    discovery: { enabled: true, asLocalhost: isLocal },
+                    eventHandlerOptions: {
+                        commitTimeout: 30,
+                        strategy: DefaultEventHandlerStrategies.MSPID_SCOPE_ANYFORTX
+                    }
+                });
+                this.companyNetwork = await this.companyGateway.getNetwork(channelName);
+            } catch (e) {
+                console.warn('Company gateway failed to connect (identity might not be present yet)');
+            }
         }
 
         // Final check after all retries
@@ -161,7 +192,11 @@ class FabricService extends EventEmitter {
                 }
             }
 
-            // Setup Gateway
+            // Store globally for dynamic authentic employee connections
+            this.ccp = ccp;
+            this.wallet = wallet;
+
+            // Setup Primary Gateway
             this.gateway = new Gateway();
             await this.gateway.connect(ccp, {
                 wallet,
@@ -176,6 +211,35 @@ class FabricService extends EventEmitter {
             // Get Network and Contract
             this.network = await this.gateway.getNetwork(channelName);
             this.contract = this.network.getContract(chaincodeName);
+            
+            // Setup Company Gateway (for internal testing/mocking)
+            try {
+                const companyIdentity = await wallet.get('Admin@company.org');
+                if (companyIdentity) {
+                    // Deep clone CCP to override client organization for Company
+                    const companyCcp = JSON.parse(JSON.stringify(ccp));
+                    if (companyCcp.client) {
+                        companyCcp.client.organization = "CompanyOrg";
+                    }
+
+                    this.companyGateway = new Gateway();
+                    await this.companyGateway.connect(companyCcp, {
+                        wallet,
+                        identity: 'Admin@company.org',
+                        discovery: { enabled: true, asLocalhost: isLocal },
+                        eventHandlerOptions: {
+                            commitTimeout: 30,
+                            strategy: DefaultEventHandlerStrategies.MSPID_SCOPE_ANYFORTX
+                        }
+                    });
+                    this.companyNetwork = await this.companyGateway.getNetwork(channelName);
+                    console.log('Successfully connected companyGateway as Admin@company.org');
+                } else {
+                    console.warn('Admin@company.org identity not found in wallet, operations acting as company will fail');
+                }
+            } catch (e) {
+                console.error(`Company Gateway setup failed: ${e.message}`);
+            }
 
             // Wait for discovery to populate connected endorsers before serving requests
             await this._waitForDiscovery(ccp, wallet, adminUser, channelName, isLocal);
@@ -204,6 +268,52 @@ class FabricService extends EventEmitter {
         }
         const chaincodeName = process.env.CHAINCODE_NAME_V2 || 'employment';
         return this.network.getContract(chaincodeName, contractName);
+    }
+    
+    /**
+     * Returns a named contract operating under the CompanyMSP context.
+     * Use this when submitting transactions on behalf of a company.
+     */
+    getCompanyContractV2(contractName) {
+        if (!this.companyNetwork) {
+            throw new Error('Company Fabric connection not initialized (missing Admin@company.org in wallet?)');
+        }
+        const chaincodeName = process.env.CHAINCODE_NAME_V2 || 'employment';
+        return this.companyNetwork.getContract(chaincodeName, contractName);
+    }
+
+    /**
+     * Dynamically instantiates a temporary Gateway connection using a specific employee's wallet identity.
+     * This ensures transactions are authentically signed by the end-user rather than Government God Mode.
+     */
+    async getEmployeeContractV2(employeeIdentityName, contractName) {
+        if (!this.wallet || !this.ccp) {
+            throw new Error('Fabric service core not initialized');
+        }
+
+        const identity = await this.wallet.get(employeeIdentityName);
+        if (!identity) {
+            throw new Error(`Wallet identity for ${employeeIdentityName} not found. Has this employee been minted on-chain?`);
+        }
+
+        const isLocal = !process.env.WALLET_PATH;
+
+        const dynamicGateway = new Gateway();
+        await dynamicGateway.connect(this.ccp, {
+            wallet: this.wallet,
+            identity: employeeIdentityName,
+            discovery: { enabled: true, asLocalhost: isLocal },
+            eventHandlerOptions: {
+                commitTimeout: 30,
+                strategy: DefaultEventHandlerStrategies.MSPID_SCOPE_ANYFORTX
+            }
+        });
+
+        const channelName = process.env.CHANNEL_NAME || 'nevs-channel';
+        const chaincodeName = process.env.CHAINCODE_NAME_V2 || 'employment';
+        
+        const dynamicNetwork = await dynamicGateway.getNetwork(channelName);
+        return dynamicNetwork.getContract(chaincodeName, contractName);
     }
 
     /**
