@@ -1,0 +1,40 @@
+[34m2026-02-21 10:09:08.668 UTC 0001 INFO[0m [nodeCmd] [34;1mserve[0m -> Starting peer:
+ Version: 2.4.9
+ Commit SHA: 2a13518
+ Go version: go1.18.10
+ OS/Arch: linux/amd64
+ Chaincode:
+  Base Docker Label: org.hyperledger.fabric
+  Docker Namespace: hyperledger
+[34m2026-02-21 10:09:08.668 UTC 0002 INFO[0m [peer] [34;1mgetLocalAddress[0m -> Auto-detected peer address: 172.20.0.4:7051
+[34m2026-02-21 10:09:08.668 UTC 0003 INFO[0m [peer] [34;1mgetLocalAddress[0m -> Returning peer0.central.govt:7051
+[34m2026-02-21 10:09:08.689 UTC 0004 INFO[0m [nodeCmd] [34;1minitGrpcSemaphores[0m -> concurrency limit for endorser service is 2500
+[34m2026-02-21 10:09:08.689 UTC 0005 INFO[0m [nodeCmd] [34;1minitGrpcSemaphores[0m -> concurrency limit for deliver service is 2500
+[34m2026-02-21 10:09:08.689 UTC 0006 INFO[0m [nodeCmd] [34;1minitGrpcSemaphores[0m -> concurrency limit for gateway service is 500
+[34m2026-02-21 10:09:08.689 UTC 0007 INFO[0m [nodeCmd] [34;1mserve[0m -> Starting peer with TLS enabled
+[34m2026-02-21 10:09:08.740 UTC 0008 INFO[0m [certmonitor] [34;1mtrackCertExpiration[0m -> The enrollment certificate will expire on 2027-02-21 10:09:00 +0000 UTC
+[34m2026-02-21 10:09:08.740 UTC 0009 INFO[0m [certmonitor] [34;1mtrackCertExpiration[0m -> The server TLS certificate will expire on 2027-02-21 10:09:00 +0000 UTC
+[34m2026-02-21 10:09:08.743 UTC 000a INFO[0m [ledgermgmt] [34;1mNewLedgerMgr[0m -> Initializing LedgerMgr
+[34m2026-02-21 10:09:08.790 UTC 000b INFO[0m [leveldbhelper] [34;1mopenDBAndCheckFormat[0m -> DB is empty Setting db format as 2.0
+[34m2026-02-21 10:09:08.793 UTC 000c INFO[0m [blkstorage] [34;1mNewProvider[0m -> Creating new file ledger directory at /var/hyperledger/production/ledgersData/chains/chains
+[34m2026-02-21 10:09:08.821 UTC 000d INFO[0m [leveldbhelper] [34;1mopenDBAndCheckFormat[0m -> DB is empty Setting db format as 2.0
+[34m2026-02-21 10:09:08.867 UTC 000e INFO[0m [leveldbhelper] [34;1mopenDBAndCheckFormat[0m -> DB is empty Setting db format as 2.0
+[34m2026-02-21 10:09:08.875 UTC 000f INFO[0m [ledgermgmt] [34;1mNewLedgerMgr[0m -> Initialized LedgerMgr
+[34m2026-02-21 10:09:08.882 UTC 0010 INFO[0m [gossip.service] [34;1mNew[0m -> Initialize gossip with endpoint peer0.central.govt:7051
+[34m2026-02-21 10:09:08.885 UTC 0011 INFO[0m [gossip.gossip] [34;1mNew[0m -> Creating gossip service with self membership of Endpoint: peer0.central.govt:7051, InternalEndpoint: peer0.central.govt:7051, PKI-ID: 82120839de180243eaf802bdde1658cd692e2e028ba4870ecb5d28add952fc8c, Metadata: 
+[34m2026-02-21 10:09:08.886 UTC 0012 INFO[0m [lifecycle] [34;1mInitializeLocalChaincodes[0m -> Initialized lifecycle cache with 0 already installed chaincodes
+[34m2026-02-21 10:09:08.886 UTC 0013 INFO[0m [gossip.gossip] [34;1mstart[0m -> Gossip instance peer0.central.govt:7051 started
+[34m2026-02-21 10:09:08.887 UTC 0014 INFO[0m [nodeCmd] [34;1mcomputeChaincodeEndpoint[0m -> Entering computeChaincodeEndpoint with peerHostname: peer0.central.govt
+[34m2026-02-21 10:09:08.887 UTC 0015 INFO[0m [nodeCmd] [34;1mcomputeChaincodeEndpoint[0m -> Exit with ccEndpoint: peer0.central.govt:7052
+[34m2026-02-21 10:09:08.896 UTC 0016 INFO[0m [sccapi] [34;1mDeploySysCC[0m -> deploying system chaincode 'lscc'
+[34m2026-02-21 10:09:08.897 UTC 0017 INFO[0m [sccapi] [34;1mDeploySysCC[0m -> deploying system chaincode 'cscc'
+[34m2026-02-21 10:09:08.898 UTC 0018 INFO[0m [sccapi] [34;1mDeploySysCC[0m -> deploying system chaincode 'qscc'
+[34m2026-02-21 10:09:08.898 UTC 0019 INFO[0m [sccapi] [34;1mDeploySysCC[0m -> deploying system chaincode '_lifecycle'
+[34m2026-02-21 10:09:08.898 UTC 001a INFO[0m [nodeCmd] [34;1mserve[0m -> Deployed system chaincodes
+[34m2026-02-21 10:09:08.899 UTC 001b INFO[0m [discovery] [34;1mNewService[0m -> Created with config TLS: true, authCacheMaxSize: 1000, authCachePurgeRatio: 0.750000
+[34m2026-02-21 10:09:08.899 UTC 001c INFO[0m [nodeCmd] [34;1mserve[0m -> Discovery service activated
+[34m2026-02-21 10:09:08.899 UTC 001d INFO[0m [nodeCmd] [34;1mserve[0m -> Starting peer with Gateway enabled
+[34m2026-02-21 10:09:08.899 UTC 001e INFO[0m [nodeCmd] [34;1mserve[0m -> Starting peer with ID=[peer0.central.govt], network ID=[dev], address=[peer0.central.govt:7051]
+[34m2026-02-21 10:09:08.900 UTC 001f INFO[0m [nodeCmd] [34;1mserve[0m -> Started peer with ID=[peer0.central.govt], network ID=[dev], address=[peer0.central.govt:7051]
+[34m2026-02-21 10:09:08.900 UTC 0020 INFO[0m [kvledger] [34;1mLoadPreResetHeight[0m -> Loading prereset height from path [/var/hyperledger/production/ledgersData/chains]
+[34m2026-02-21 10:09:08.900 UTC 0021 INFO[0m [blkstorage] [34;1mpreResetHtFiles[0m -> No active channels passed

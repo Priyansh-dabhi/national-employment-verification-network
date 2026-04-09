@@ -1,0 +1,158 @@
+Organizations:
+  - &OrdererOrg
+    Name: OrdererMSP
+    ID: OrdererMSP
+    MSPDir: ../organizations/ordererOrganizations/nevs.gov/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('OrdererMSP.admin')"
+    OrdererEndpoints:
+        - orderer.nevs.gov:7050
+
+  - &CentralGovt
+    Name: CentralGovtMSP
+    ID: CentralGovtMSP
+    MSPDir: ../organizations/peerOrganizations/central.govt/msp
+    AnchorPeers:
+      - Host: peer0.central.govt
+        Port: 7051
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('CentralGovtMSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('CentralGovtMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('CentralGovtMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('CentralGovtMSP.member')"
+
+  - &CompanyOrg
+    Name: CompanyOrgMSP
+    ID: CompanyOrgMSP
+    MSPDir: ../organizations/peerOrganizations/company.org/msp
+    AnchorPeers:
+      - Host: peer0.company.org
+        Port: 9051
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('CompanyOrgMSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('CompanyOrgMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('CompanyOrgMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('CompanyOrgMSP.member')"
+
+Capabilities:
+  Channel: &ChannelCapabilities
+    V2_0: true
+  Orderer: &OrdererCapabilities
+    V2_0: true
+  Application: &ApplicationCapabilities
+    V2_0: true
+
+Application: &ApplicationDefaults
+  Organizations:
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    LifecycleEndorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+    Endorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+  Capabilities:
+    <<: *ApplicationCapabilities
+
+Orderer: &OrdererDefaults
+  OrdererType: etcdraft
+  Addresses:
+    - orderer.nevs.gov:7050
+  BatchTimeout: 2s
+  BatchSize:
+    MaxMessageCount: 10
+    AbsoluteMaxBytes: 99 MB
+    PreferredMaxBytes: 512 KB
+  EtcdRaft:
+    Consenters:
+      - Host: orderer.nevs.gov
+        Port: 7050
+        ClientTLSCert: ../organizations/ordererOrganizations/nevs.gov/orderers/orderer.nevs.gov/tls/server.crt
+        ServerTLSCert: ../organizations/ordererOrganizations/nevs.gov/orderers/orderer.nevs.gov/tls/server.crt
+  Organizations:
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    BlockValidation:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+  Capabilities:
+    <<: *OrdererCapabilities
+
+Channel: &ChannelDefaults
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+  Capabilities:
+    <<: *ChannelCapabilities
+
+Profiles:
+  NEVSOrdererGenesis:
+    <<: *ChannelDefaults
+    Orderer:
+      <<: *OrdererDefaults
+      Organizations:
+        - *OrdererOrg
+      Capabilities:
+        <<: *OrdererCapabilities
+    Consortiums:
+      NEVSConsortium:
+        Organizations:
+          - *CentralGovt
+
+  NEVSChannel:
+    Consortium: NEVSConsortium
+    <<: *ChannelDefaults
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+        - *CentralGovt
+      Capabilities:
+        <<: *ApplicationCapabilities

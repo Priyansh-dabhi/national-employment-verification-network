@@ -1,0 +1,20 @@
+version: '3.7'
+
+networks:
+  nevs_net:
+    name: nevs_network
+
+services:
+  employment.cc:
+    build:
+      context: ../../chaincode/nevs
+      dockerfile: Dockerfile
+    container_name: employment.cc
+    environment:
+      - CHAINCODE_SERVER_ADDRESS=0.0.0.0:9999
+      - CHAINCODE_ID=employment-cc:4d44c38cb66af98ca3a83e283c5dcb43a46f9060faff4ec1b086719501517fb0
+      - CORE_PEER_TLS_ENABLED=false
+    ports:
+      - "9999:9999"
+    networks:
+      - nevs_net

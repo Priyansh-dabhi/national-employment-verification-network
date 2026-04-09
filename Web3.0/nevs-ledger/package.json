@@ -1,0 +1,17 @@
+{
+  "name": "nevs-ledger",
+  "version": "1.0.0",
+  "description": "Project scaffold for Hyperledger Fabric network configuration.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "fabric-ca-client": "^2.2.20",
+    "fabric-network": "^2.2.20"
+  }
+}

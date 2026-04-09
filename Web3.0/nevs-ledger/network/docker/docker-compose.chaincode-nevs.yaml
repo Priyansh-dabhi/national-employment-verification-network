@@ -1,0 +1,20 @@
+version: '3.7'
+
+networks:
+  nevs_net:
+    name: nevs_network
+
+services:
+  nevs.cc:
+    build:
+      context: ../../chaincode/nevs
+      dockerfile: Dockerfile
+    container_name: nevs.cc
+    environment:
+      - CHAINCODE_SERVER_ADDRESS=0.0.0.0:9998
+      - CHAINCODE_ID=nevs_1.4_final:616da25b88b9ffce84e86b2a05edb2a0c1d9786ffe03cde553504f62613e3ce2994
+      - CORE_PEER_TLS_ENABLED=false
+    ports:
+      - "9998:9998"
+    networks:
+      - nevs_net

@@ -1,0 +1,124 @@
+[33m2026-02-21 09:39:22.700 UTC 0001 WARN[0m [localconfig] [33;1mcompleteInitialization[0m -> General.GenesisFile should be replaced by General.BootstrapFile
+[34m2026-02-21 09:39:22.703 UTC 0002 INFO[0m [localconfig] [34;1mcompleteInitialization[0m -> Kafka.Version unset, setting to 0.10.2.0
+[34m2026-02-21 09:39:22.703 UTC 0003 INFO[0m [orderer.common.server] [34;1mprettyPrintStruct[0m -> Orderer config values:
+	General.ListenAddress = "0.0.0.0"
+	General.ListenPort = 7050
+	General.TLS.Enabled = true
+	General.TLS.PrivateKey = "/var/hyperledger/orderer/tls/server.key"
+	General.TLS.Certificate = "/var/hyperledger/orderer/tls/server.crt"
+	General.TLS.RootCAs = [/var/hyperledger/orderer/tls/ca.crt]
+	General.TLS.ClientAuthRequired = false
+	General.TLS.ClientRootCAs = []
+	General.TLS.TLSHandshakeTimeShift = 0s
+	General.Cluster.ListenAddress = ""
+	General.Cluster.ListenPort = 0
+	General.Cluster.ServerCertificate = ""
+	General.Cluster.ServerPrivateKey = ""
+	General.Cluster.ClientCertificate = ""
+	General.Cluster.ClientPrivateKey = ""
+	General.Cluster.RootCAs = []
+	General.Cluster.DialTimeout = 5s
+	General.Cluster.RPCTimeout = 7s
+	General.Cluster.ReplicationBufferSize = 20971520
+	General.Cluster.ReplicationPullTimeout = 5s
+	General.Cluster.ReplicationRetryTimeout = 5s
+	General.Cluster.ReplicationBackgroundRefreshInterval = 5m0s
+	General.Cluster.ReplicationMaxRetries = 12
+	General.Cluster.SendBufferSize = 10
+	General.Cluster.CertExpirationWarningThreshold = 168h0m0s
+	General.Cluster.TLSHandshakeTimeShift = 0s
+	General.Keepalive.ServerMinInterval = 1m0s
+	General.Keepalive.ServerInterval = 2h0m0s
+	General.Keepalive.ServerTimeout = 20s
+	General.ConnectionTimeout = 0s
+	General.GenesisMethod = "file"
+	General.GenesisFile = "/var/hyperledger/orderer/genesis.block"
+	General.BootstrapMethod = "file"
+	General.BootstrapFile = "/var/hyperledger/orderer/genesis.block"
+	General.Profile.Enabled = false
+	General.Profile.Address = "0.0.0.0:6060"
+	General.LocalMSPDir = "/var/hyperledger/orderer/msp"
+	General.LocalMSPID = "OrdererMSP"
+	General.BCCSP.Default = "SW"
+	General.BCCSP.SW.Security = 256
+	General.BCCSP.SW.Hash = "SHA2"
+	General.BCCSP.SW.FileKeystore.KeyStorePath = ""
+	General.Authentication.TimeWindow = 15m0s
+	General.Authentication.NoExpirationChecks = false
+	General.MaxRecvMsgSize = 104857600
+	General.MaxSendMsgSize = 104857600
+	FileLedger.Location = "/var/hyperledger/production/orderer"
+	FileLedger.Prefix = ""
+	Kafka.Retry.ShortInterval = 5s
+	Kafka.Retry.ShortTotal = 10m0s
+	Kafka.Retry.LongInterval = 5m0s
+	Kafka.Retry.LongTotal = 12h0m0s
+	Kafka.Retry.NetworkTimeouts.DialTimeout = 10s
+	Kafka.Retry.NetworkTimeouts.ReadTimeout = 10s
+	Kafka.Retry.NetworkTimeouts.WriteTimeout = 10s
+	Kafka.Retry.Metadata.RetryMax = 3
+	Kafka.Retry.Metadata.RetryBackoff = 250ms
+	Kafka.Retry.Producer.RetryMax = 3
+	Kafka.Retry.Producer.RetryBackoff = 100ms
+	Kafka.Retry.Consumer.RetryBackoff = 2s
+	Kafka.Verbose = false
+	Kafka.Version = 0.10.2.0
+	Kafka.TLS.Enabled = false
+	Kafka.TLS.PrivateKey = ""
+	Kafka.TLS.Certificate = ""
+	Kafka.TLS.RootCAs = []
+	Kafka.TLS.ClientAuthRequired = false
+	Kafka.TLS.ClientRootCAs = []
+	Kafka.TLS.TLSHandshakeTimeShift = 0s
+	Kafka.SASLPlain.Enabled = false
+	Kafka.SASLPlain.User = ""
+	Kafka.SASLPlain.Password = ""
+	Kafka.Topic.ReplicationFactor = 3
+	Debug.BroadcastTraceDir = ""
+	Debug.DeliverTraceDir = ""
+	Consensus = map[SnapDir:/var/hyperledger/production/orderer/etcdraft/snapshot WALDir:/var/hyperledger/production/orderer/etcdraft/wal]
+	Operations.ListenAddress = "0.0.0.0:7053"
+	Operations.TLS.Enabled = false
+	Operations.TLS.PrivateKey = ""
+	Operations.TLS.Certificate = ""
+	Operations.TLS.RootCAs = []
+	Operations.TLS.ClientAuthRequired = false
+	Operations.TLS.ClientRootCAs = []
+	Operations.TLS.TLSHandshakeTimeShift = 0s
+	Metrics.Provider = "disabled"
+	Metrics.Statsd.Network = "udp"
+	Metrics.Statsd.Address = "127.0.0.1:8125"
+	Metrics.Statsd.WriteInterval = 30s
+	Metrics.Statsd.Prefix = ""
+	ChannelParticipation.Enabled = true
+	ChannelParticipation.MaxRequestBodySize = 1048576
+	Admin.ListenAddress = "127.0.0.1:9443"
+	Admin.TLS.Enabled = true
+	Admin.TLS.PrivateKey = "/var/hyperledger/orderer/tls/server.key"
+	Admin.TLS.Certificate = "/var/hyperledger/orderer/tls/server.crt"
+	Admin.TLS.RootCAs = [/var/hyperledger/orderer/tls/ca.crt]
+	Admin.TLS.ClientAuthRequired = true
+	Admin.TLS.ClientRootCAs = []
+	Admin.TLS.TLSHandshakeTimeShift = 0s
+[33m2026-02-21 09:39:22.798 UTC 0004 WARN[0m [msp] [33;1mloadCertificateAt[0m -> Failed loading ClientOU certificate at [/var/hyperledger/orderer/msp/cacerts/ca.nevs.gov-cert.pem]: [could not read file /var/hyperledger/orderer/msp/cacerts/ca.nevs.gov-cert.pem: open /var/hyperledger/orderer/msp/cacerts/ca.nevs.gov-cert.pem: no such file or directory]
+[33m2026-02-21 09:39:22.800 UTC 0005 WARN[0m [msp] [33;1mloadCertificateAt[0m -> Failed loading PeerOU certificate at [/var/hyperledger/orderer/msp/cacerts/ca.nevs.gov-cert.pem]: [could not read file /var/hyperledger/orderer/msp/cacerts/ca.nevs.gov-cert.pem: open /var/hyperledger/orderer/msp/cacerts/ca.nevs.gov-cert.pem: no such file or directory]
+[33m2026-02-21 09:39:22.802 UTC 0006 WARN[0m [msp] [33;1mloadCertificateAt[0m -> Failed loading AdminOU certificate at [/var/hyperledger/orderer/msp/cacerts/ca.nevs.gov-cert.pem]: [could not read file /var/hyperledger/orderer/msp/cacerts/ca.nevs.gov-cert.pem: open /var/hyperledger/orderer/msp/cacerts/ca.nevs.gov-cert.pem: no such file or directory]
+[33m2026-02-21 09:39:22.803 UTC 0007 WARN[0m [msp] [33;1mloadCertificateAt[0m -> Failed loading OrdererOU certificate at [/var/hyperledger/orderer/msp/cacerts/ca.nevs.gov-cert.pem]: [could not read file /var/hyperledger/orderer/msp/cacerts/ca.nevs.gov-cert.pem: open /var/hyperledger/orderer/msp/cacerts/ca.nevs.gov-cert.pem: no such file or directory]
+[34m2026-02-21 09:39:22.868 UTC 0008 INFO[0m [orderer.common.server] [34;1minitializeServerConfig[0m -> Starting orderer with TLS enabled
+[34m2026-02-21 09:39:22.939 UTC 0009 INFO[0m [blkstorage] [34;1mNewProvider[0m -> Creating new file ledger directory at /var/hyperledger/production/orderer/chains
+[35m2026-02-21 09:39:22.965 UTC 000a PANI[0m [orderer.common.server] [35;1mMain[0m -> Failed validating bootstrap block: initializing channelconfig failed: could not create channel Consortiums sub-group config: setting up the MSP manager failed: administrators must be declared when no admin ou classification is set
+panic: Failed validating bootstrap block: initializing channelconfig failed: could not create channel Consortiums sub-group config: setting up the MSP manager failed: administrators must be declared when no admin ou classification is set
+
+goroutine 1 [running]:
+go.uber.org/zap/zapcore.(*CheckedEntry).Write(0xc000164000, {0x0, 0x0, 0x0})
+	/go/src/github.com/hyperledger/fabric/vendor/go.uber.org/zap/zapcore/entry.go:234 +0x49b
+go.uber.org/zap.(*SugaredLogger).log(0xc000442260, 0x4, {0xf6f78e?, 0xf1?}, {0xc00016f730?, 0xc0001a9008?, 0x1?}, {0x0, 0x0, 0x0})
+	/go/src/github.com/hyperledger/fabric/vendor/go.uber.org/zap/sugar.go:234 +0x13b
+go.uber.org/zap.(*SugaredLogger).Panicf(...)
+	/go/src/github.com/hyperledger/fabric/vendor/go.uber.org/zap/sugar.go:159
+github.com/hyperledger/fabric/common/flogging.(*FabricLogger).Panicf(...)
+	/go/src/github.com/hyperledger/fabric/common/flogging/zap.go:74
+github.com/hyperledger/fabric/orderer/common/server.Main()
+	/go/src/github.com/hyperledger/fabric/orderer/common/server/main.go:130 +0x7a8
+main.main()
+	/go/src/github.com/hyperledger/fabric/cmd/orderer/main.go:15 +0x17

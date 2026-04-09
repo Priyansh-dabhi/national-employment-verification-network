@@ -1,0 +1,40 @@
+version: '3.7'
+
+networks:
+  nevs_net:
+    name: nevs_network
+
+services:
+  nevs-gateway:
+    build: .
+    container_name: nevs-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      # Use dynamic hostnames now that we are inside the Docker network
+      - PORT=3000
+      - MSPID=CentralGovtMSP
+      - CHANNEL_NAME=nevs-channel
+      - CHAINCODE_NAME=employment
+      - CHAINCODE_NAME_V2=employment
+      - CONNECTION_PROFILE_PATH=/app/config/connection-profile.json
+      - WALLET_PATH=/app/wallet
+      - FABRIC_CA_URL=https://ca.central.govt:7054
+      - FABRIC_CA_NAME=ca-central-govt
+      - FABRIC_CA_ADMIN=admin
+      - FABRIC_CA_ADMIN_PW=adminpw
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY:-nevs-internal-secret-key}
+      - WEBHOOK_BASE_URL=${WEBHOOK_BASE_URL:-http://host.docker.internal:5000}
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET:-nevs-webhook-hmac-secret}
+      - EVENT_LISTENER_ENABLED=true
+      - EVENT_RETRY_MAX=5
+    volumes:
+      - ./config:/app/config
+      - ./wallet:/app/wallet
+      - ./src:/app/src
+      # Mount the network crypto materials so the container can access the TLS certificates required by the connection profile
+      - ../nevs-ledger/network/organizations:/organizations
+      # Mount the docker socket so God Mode APIs can kill peers
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - nevs_net

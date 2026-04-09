@@ -1,0 +1,100 @@
+{
+    "name": "nevs-network",
+    "version": "1.0.0",
+    "client": {
+        "organization": "CentralGovt",
+        "connection": {
+            "timeout": {
+                "peer": {
+                    "endorser": "300"
+                }
+            }
+        }
+    },
+    "channels": {
+        "nevs-channel": {
+            "orderers": [
+                "orderer.nevs.gov"
+            ],
+            "peers": {
+                "peer0.central.govt": {
+                    "endorsingPeer": true,
+                    "chaincodeQuery": true,
+                    "ledgerQuery": true,
+                    "eventSource": true
+                },
+                "peer1.central.govt": {
+                    "endorsingPeer": true,
+                    "chaincodeQuery": true,
+                    "ledgerQuery": true,
+                    "eventSource": true
+                },
+                "peer0.company.org": {
+                    "endorsingPeer": true,
+                    "chaincodeQuery": true,
+                    "ledgerQuery": true,
+                    "eventSource": true
+                }
+            }
+        }
+    },
+    "organizations": {
+        "CentralGovt": {
+            "mspid": "CentralGovtMSP",
+            "peers": [
+                "peer0.central.govt",
+                "peer1.central.govt"
+            ]
+        },
+        "CompanyOrg": {
+            "mspid": "CompanyOrgMSP",
+            "peers": [
+                "peer0.company.org"
+            ]
+        }
+    },
+    "orderers": {
+        "orderer.nevs.gov": {
+            "url": "grpcs://orderer.nevs.gov:7050",
+            "tlsCACerts": {
+                "path": "/organizations/ordererOrganizations/nevs.gov/orderers/orderer.nevs.gov/tls/ca.crt"
+            },
+            "grpcOptions": {
+                "ssl-target-name-override": "orderer.nevs.gov",
+                "hostnameOverride": "orderer.nevs.gov"
+            }
+        }
+    },
+    "peers": {
+        "peer0.central.govt": {
+            "url": "grpcs://peer0.central.govt:7051",
+            "tlsCACerts": {
+                "path": "/organizations/peerOrganizations/central.govt/peers/peer0.central.govt/tls/ca.crt"
+            },
+            "grpcOptions": {
+                "ssl-target-name-override": "peer0.central.govt",
+                "hostnameOverride": "peer0.central.govt"
+            }
+        },
+        "peer1.central.govt": {
+            "url": "grpcs://peer1.central.govt:8051",
+            "tlsCACerts": {
+                "path": "/organizations/peerOrganizations/central.govt/peers/peer1.central.govt/tls/ca.crt"
+            },
+            "grpcOptions": {
+                "ssl-target-name-override": "peer1.central.govt",
+                "hostnameOverride": "peer1.central.govt"
+            }
+        },
+        "peer0.company.org": {
+            "url": "grpcs://peer0.company.org:9051",
+            "tlsCACerts": {
+                "path": "/organizations/peerOrganizations/company.org/peers/peer0.company.org/tls/ca.crt"
+            },
+            "grpcOptions": {
+                "ssl-target-name-override": "peer0.company.org",
+                "hostnameOverride": "peer0.company.org"
+            }
+        }
+    }
+}

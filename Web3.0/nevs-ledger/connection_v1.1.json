@@ -1,0 +1,5 @@
+{
+  "address": "nevs.cc:9998",
+  "dial_timeout": "10s",
+  "tls_required": false
+}
