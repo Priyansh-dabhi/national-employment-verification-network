@@ -32,8 +32,10 @@ class IdentityController {
 
             // Submit chaincode transaction asynchronously
             try {
-                const contract = fabricService.network.getContract(process.env.CHAINCODE_NAME_V2 || 'nevs');
-                await contract.submitTransaction('RegisterEmployee', employeeID, fullName, "MINTING", "GOVT");
+                const contract = fabricService.getContractV2('EmployeeRegistryContract');
+                const createdAt = new Date().toISOString();
+                // Passing empty idHash if not provided
+                await contract.submitTransaction('RegisterEmployee', employeeID, fullName, dateOfBirth || "1990-01-01", idHash || "N/A", createdAt);
                 console.log(`Successfully submitted RegisterEmployee for ${employeeID}`);
             } catch (err) {
                 console.error(`Failed to submit RegisterEmployee to chaincode for ${employeeID}:`, err);
