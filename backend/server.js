@@ -8,7 +8,7 @@ import jobRoutes from './routes/jobRoutes.js';
 import verificationRoutes from './routes/verificationRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import employerRoutes from './routes/employerRoutes.js';
-import webhookRoutes from './src/routes/webhookRoutes.js';
+import webhookRoutes from './routes/webhookRoutes.js';
 import { createTables } from './config/db.js';
 
 dotenv.config();

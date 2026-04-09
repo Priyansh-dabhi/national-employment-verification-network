@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
-import { pool } from '../../config/db.js';
+import { pool } from '../config/db.js';
 import dotenv from 'dotenv';
 dotenv.config();
 

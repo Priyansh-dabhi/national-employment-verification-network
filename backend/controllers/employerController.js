@@ -256,3 +256,74 @@ export const markEmployeeLeft = async (req, res) => {
         res.status(500).json({ message: 'Failed to update employee status' });
     }
 };
+
+// ─── GET /api/employer/available-employees ───────────────────────────
+export const getAvailableEmployees = async (req, res) => {
+    try {
+        const result = await pool.query(
+            `SELECT id, full_name, email, city, state, account_status
+             FROM employees
+             WHERE account_status = 'VERIFIED' AND web3_status = 'ACTIVE'`
+        );
+        res.status(200).json({ employees: result.rows });
+    } catch (error) {
+        console.error('getAvailableEmployees error:', error);
+        res.status(500).json({ message: 'Failed to fetch available employees' });
+    }
+};
+
+// ─── POST /api/employer/propose-hire ─────────────────────────────────
+export const proposeHire = async (req, res) => {
+    try {
+        const { id: employerId } = req.user;
+        const { employeeId, position, salary, compensation } = req.body;
+
+        if (!employeeId || !position || !salary) {
+            return res.status(400).json({ message: 'employeeId, position, and salary are required' });
+        }
+
+        // Insert into Web2 DB
+        await pool.query(
+            `INSERT INTO company_employees (employer_id, employee_id, position, status, joined_at)
+             VALUES ($1, $2, $3, 'PROPOSED', NOW())
+             ON CONFLICT (employer_id, employee_id) DO UPDATE SET status = 'PROPOSED', position = EXCLUDED.position, left_at = NULL`,
+            [employerId, employeeId, position]
+        );
+
+        // Fetch user and employer details for payload to Web3 Gateway
+        const empQuery = await pool.query('SELECT web3_employee_id FROM employees WHERE id = $1', [employeeId]);
+        const compQuery = await pool.query('SELECT web3_company_id FROM employers WHERE id = $1', [employerId]);
+        
+        if (empQuery.rows.length === 0 || compQuery.rows.length === 0) {
+            return res.status(404).json({ message: 'Entities not found' });
+        }
+
+        // --- Call Web3 Gateway ---
+        const gatewayUrl = process.env.NEVS_GATEWAY_URL || 'http://localhost:3000';
+        const internalApiKey = process.env.INTERNAL_API_KEY || 'nevs-internal-secret-key';
+        
+        try {
+            const { default: axios } = await import('axios');
+            await axios.post(
+                `${gatewayUrl}/api/internal/propose-employment`,
+                {
+                    employeeID: empQuery.rows[0].web3_employee_id,
+                    companyID: compQuery.rows[0].web3_company_id,
+                    position,
+                    salary,
+                    compensation: compensation || ""
+                },
+                {
+                    headers: { 'x-api-key': internalApiKey }
+                }
+            );
+        } catch (gateErr) {
+            console.error("Gateway call failed for propose-hire:", gateErr.response ? gateErr.response.data : gateErr.message);
+        }
+
+        res.status(200).json({ message: "Employment proposed successfully" });
+    } catch (error) {
+        console.error('proposeHire error:', error);
+        res.status(500).json({ message: 'Failed to propose hire', error: error.message });
+    }
+};

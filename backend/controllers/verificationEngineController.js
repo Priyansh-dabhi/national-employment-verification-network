@@ -1,7 +1,7 @@
 import { pool } from '../config/db.js';
 import Tesseract from 'tesseract.js';
 import crypto from 'crypto';
-import { mintEmployeeIdentity } from '../src/services/web3IdentityService.js';
+import { mintEmployeeIdentity } from '../services/web3IdentityService.js';
 
 export const uploadAndVerifyDocument = async (req, res) => {
     try {

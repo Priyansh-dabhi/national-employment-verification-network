@@ -13,6 +13,8 @@ import {
     getVerifiedEmployees,
     getCompanyEmployees,
     markEmployeeLeft,
+    getAvailableEmployees,
+    proposeHire
 } from '../controllers/employerController.js';
 
 const router = express.Router();
@@ -39,5 +41,9 @@ router.get('/verification-requests', getVerificationRequests);
 router.get('/verified-employees', getVerifiedEmployees);
 router.get('/employees', getCompanyEmployees);
 router.post('/employees/:id/leave', markEmployeeLeft);
+
+// Phase 5 Hiring Flow
+router.get('/available-employees', getAvailableEmployees);
+router.post('/propose-hire', proposeHire);
 
 export default router;

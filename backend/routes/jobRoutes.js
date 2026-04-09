@@ -35,4 +35,8 @@ router.get('/:jobId/applicants', authorizeRoles('EMPLOYER'), getJobApplicants);
 // 6. Get Employee Applications (Employee Only)
 router.get('/employee', authorizeRoles('EMPLOYEE'), getEmployeeApplications);
 
+// Phase 5 Hiring Routes
+router.get('/pending-offers', authorizeRoles('EMPLOYEE'), getPendingOffers);
+router.post('/consent-hire', authorizeRoles('EMPLOYEE'), consentHire);
+
 export default router;

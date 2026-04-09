@@ -135,3 +135,84 @@ export const getEmployeeApplications = async (req, res) => {
         res.status(500).json({ message: 'Server error fetching applications.' });
     }
 };
+
+// 7. Get Pending Job Offers (Employee)
+export const getPendingOffers = async (req, res) => {
+    try {
+        const employeeId = req.user.id;
+        
+        const offers = await pool.query(`
+            SELECT 
+                ce.id as proposal_id, ce.position, ce.joined_at as proposed_at,
+                e.organization_name, e.city, e.industry_sector, e.id as employer_id
+            FROM company_employees ce
+            JOIN employers e ON ce.employer_id = e.id
+            WHERE ce.employee_id = $1 AND ce.status = 'PROPOSED'
+            ORDER BY ce.joined_at DESC
+        `, [employeeId]);
+
+        res.status(200).json({ offers: offers.rows });
+    } catch (error) {
+        console.error('getPendingOffers error:', error);
+        res.status(500).json({ message: 'Server error fetching pending offers.' });
+    }
+};
+
+// 8. Consent to Hire (Employee)
+export const consentHire = async (req, res) => {
+    try {
+        const employeeId = req.user.id;
+        const { employerId } = req.body;
+
+        if (!employerId) {
+            return res.status(400).json({ message: "employerId is required" });
+        }
+
+        // Validate the proposal exists
+        const check = await pool.query(
+            "SELECT id FROM company_employees WHERE employee_id = $1 AND employer_id = $2 AND status = 'PROPOSED'",
+            [employeeId, employerId]
+        );
+
+        if (check.rows.length === 0) {
+            return res.status(404).json({ message: "No pending offer found from this employer." });
+        }
+
+        // We do NOT update the DB to ACTIVE here. 
+        // We let the Webhook (EmploymentConsented) update the DB!
+        // For optimisitic UI, we can update it to 'CONSENTING'.
+        await pool.query(
+            "UPDATE company_employees SET status = 'CONSENTING' WHERE employee_id = $1 AND employer_id = $2",
+            [employeeId, employerId]
+        );
+
+        // Fetch web3 IDs
+        const empQuery = await pool.query('SELECT web3_employee_id FROM employees WHERE id = $1', [employeeId]);
+        const compQuery = await pool.query('SELECT web3_company_id FROM employers WHERE id = $1', [employerId]);
+
+        // Call Gateway
+        const gatewayUrl = process.env.NEVS_GATEWAY_URL || 'http://localhost:3000';
+        const internalApiKey = process.env.INTERNAL_API_KEY || 'nevs-internal-secret-key';
+        
+        try {
+            const { default: axios } = await import('axios');
+            await axios.post(
+                `${gatewayUrl}/api/internal/consent-employment`,
+                {
+                    employeeID: empQuery.rows[0].web3_employee_id,
+                    companyID: compQuery.rows[0].web3_company_id
+                },
+                {
+                    headers: { 'x-api-key': internalApiKey }
+                }
+            );
+        } catch (gateErr) {
+            console.error("Gateway call failed for consent-hire:", gateErr.response ? gateErr.response.data : gateErr.message);
+        }
+
+        res.status(200).json({ message: "Consent submitted to blockchain." });
+    } catch (error) {
+        console.error('consentHire error:', error);
+        res.status(500).json({ message: 'Server error submitting consent.' });
+    }
+};

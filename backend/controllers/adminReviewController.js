@@ -1,7 +1,7 @@
 import { pool } from '../config/db.js';
 import { generateSignedUrl } from '../utils/cloudinary.js';
 import { decryptBuffer, decryptKeyWithMaster } from '../utils/encryption.js';
-import { mintEmployeeIdentity, mintCompanyIdentity } from '../src/services/web3IdentityService.js';
+import { mintEmployeeIdentity, mintCompanyIdentity } from '../services/web3IdentityService.js';
 
 // GET /api/admin/review-documents
 export const getReviewDocuments = async (req, res) => {
